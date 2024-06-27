@@ -5,7 +5,7 @@ export default class Preload extends Phaser.Scene {
 
     public preload(): void {}
     public create(): void {
-        this.scene.start('game')
+        this.scene.start('start')
     }
     public update(time: number, timeInterval: number): void {}
 }
