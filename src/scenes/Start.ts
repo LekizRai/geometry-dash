@@ -1,3 +1,5 @@
+import Pause from "./Pause"
+
 export default class Start extends Phaser.Scene {
     private playButton: Phaser.GameObjects.Image
     private playerChoosingButton: Phaser.GameObjects.Image
@@ -7,13 +9,13 @@ export default class Start extends Phaser.Scene {
         super('start')
     }
 
-    public preload() {
+    public preload(): void {
         this.load.image('play-button', 'assets/buttons/GJ_playBtn_001.png')
         this.load.image('player-button', 'assets/buttons/GJ_garageBtn_001.png')
         this.load.image('mode-button', 'assets/buttons/GJ_moreGamesBtn_001.png')
     }
 
-    public create() {
+    public create(): void {
         this.add.rectangle(0, 0, 800, 450, 0xffff00).setOrigin(0, 0)
         this.cameras.main.setSize(800, 450)
 
@@ -79,5 +81,9 @@ export default class Start extends Phaser.Scene {
                 duration: 100,
             })
         })
+
+        const win = this.add.zone(0, 0, 100, 100).setInteractive().setOrigin(0);
+        const pauseScene = new Pause()
+        // this.scene.add('pause', pauseScene, true)
     }
 }

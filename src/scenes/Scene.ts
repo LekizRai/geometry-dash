@@ -1,4 +1,7 @@
+import Pause from "./Pause"
+
 export default class Scene extends Phaser.Scene {
+    private pauseButton: Phaser.GameObjects.Image
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private fire: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private tileMap: Phaser.Tilemaps.Tilemap
@@ -6,16 +9,17 @@ export default class Scene extends Phaser.Scene {
     private spikeLayer: Phaser.Tilemaps.TilemapLayer
     private blockLayer: Phaser.Tilemaps.TilemapLayer
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys
-    private light: any
     private preloaded: boolean = false
     private camera: Phaser.Cameras.Scene2D.Camera
     private cameraFollowObject: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+
+    private light: any
 
     constructor() {
         super('game')
     }
 
-    public preload() {
+    public preload(): void {
         if (!this.preloaded) {
             this.preloaded = true
             this.load.image('background', 'assets/backgrounds/game_bg_01_001.png')
@@ -23,6 +27,7 @@ export default class Scene extends Phaser.Scene {
             this.load.image('spike', 'assets/spikes/spritesheet.png')
             this.load.image('block', 'assets/blocks/spritesheet.png')
             this.load.image('player', 'assets/players/player-30/player_30_001.png')
+            this.load.image('pause-button', 'assets/buttons/GJ_pauseEditorBtn_001.png')
             this.load.atlas('fire', 'assets/fire/fire.png', 'assets/fire/fire_atlas.json')
             this.load.atlas(
                 'gameover',
@@ -33,10 +38,11 @@ export default class Scene extends Phaser.Scene {
         }
     }
 
-    public create() {
+    public create(): void {
         this.physics.world.TILE_BIAS = 32
         this.physics.world.setBounds(0, 0, window.innerWidth, window.innerHeight)
         this.physics.world.setBoundsCollision(true, false, false, true)
+
         this.tileMap = this.make.tilemap({ key: 'tile-map', tileWidth: 32, tileHeight: 32 })
 
         const groundTileSet = this.tileMap.addTilesetImage('ground', 'ground')
@@ -122,6 +128,12 @@ export default class Scene extends Phaser.Scene {
         this.player.body.setCollideWorldBounds(true)
         this.player.setVelocityX(640)
 
+        const win = this.add.zone(0, 0, 800, 450).setInteractive().setOrigin(0, 0)
+        win.setSize(800, 450)
+        const pauseScene = new Pause()
+        this.scene.add('pause', pauseScene, true)
+        // this.pauseButton = this.add.image(0, 0, 'pause-button').setOrigin(0, 0)
+
         this.physics.add.collider(this.player, this.groundLayer)
         this.physics.add.collider(this.player, this.blockLayer, () => {
             if (this.player.body.blocked.right) {
@@ -145,19 +157,16 @@ export default class Scene extends Phaser.Scene {
             }
         })
 
-
         this.cameraFollowObject = this.physics.add.sprite(300, 100, 'player')
         this.cameraFollowObject.setVisible(false)
         this.cameraFollowObject.setVelocityX(640)
         this.physics.add.collider(this.cameraFollowObject, this.groundLayer)
+
         this.camera = this.cameras.main.setSize(800, 450)
         this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -250, 100)
     }
 
-    public update(time: number, timeInterval: number) {
-        // this.light.x = this.player.x
-        // this.light.y = this.player.y
-
+    public update(time: number, timeInterval: number): void {
         if (this.player.body.blocked.down) {
             if (this.cursors.up.isDown || this.cursors.space.isDown) {
                 this.player.setVelocityY(-1280)
@@ -176,21 +185,25 @@ export default class Scene extends Phaser.Scene {
         }
     }
 
-    public restart() {
+    public restart(): void {
         this.camera.shake(250, 0.01)
 
         this.time.addEvent({
-            delay: 600,
+            delay: 2000,
             callback: () => {
                 this.camera.resetFX()
                 this.anims.remove('fire')
                 this.anims.remove('gameover')
+                this.scene.remove('pause')
                 this.scene.stop()
                 this.scene.restart()
             },
         })
     }
 }
+
+// this.light.x = this.player.x
+// this.light.y = this.player.y
 
 // this.light = this.lights.addLight(this.player.x, this.player.y, 1000).setScrollFactor(0).setIntensity(5);
 // this.lights.enable().setAmbientColor(0x555555);
