@@ -1,15 +1,19 @@
-import Pause from "./Pause"
+import Background from './Background'
+import Pause from './Pause'
+
+// Ground = 32 * (square + 1)
 
 export default class Scene extends Phaser.Scene {
-    private pauseButton: Phaser.GameObjects.Image
     private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private fire: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
+    private backgrounds: Phaser.Physics.Arcade.Group
+
     private tileMap: Phaser.Tilemaps.Tilemap
     private groundLayer: Phaser.Tilemaps.TilemapLayer
     private spikeLayer: Phaser.Tilemaps.TilemapLayer
     private blockLayer: Phaser.Tilemaps.TilemapLayer
+
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys
-    private preloaded: boolean = false
     private camera: Phaser.Cameras.Scene2D.Camera
     private cameraFollowObject: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
 
@@ -19,29 +23,12 @@ export default class Scene extends Phaser.Scene {
         super('game')
     }
 
-    public preload(): void {
-        if (!this.preloaded) {
-            this.preloaded = true
-            this.load.image('background', 'assets/backgrounds/game_bg_01_001.png')
-            this.load.image('ground', 'assets/grounds/groundSquare_01_001.png')
-            this.load.image('spike', 'assets/spikes/spritesheet.png')
-            this.load.image('block', 'assets/blocks/spritesheet.png')
-            this.load.image('player', 'assets/players/player-30/player_30_001.png')
-            this.load.image('pause-button', 'assets/buttons/GJ_pauseEditorBtn_001.png')
-            this.load.atlas('fire', 'assets/fire/fire.png', 'assets/fire/fire_atlas.json')
-            this.load.atlas(
-                'gameover',
-                'assets/gameover/gameover.png',
-                'assets/gameover/gameover_atlas.json'
-            )
-            this.load.tilemapTiledJSON('tile-map', 'assets/geometry-dash-tile-map.tmj')
-        }
-    }
+    public preload(): void {}
 
     public create(): void {
         this.physics.world.TILE_BIAS = 32
-        this.physics.world.setBounds(0, 0, window.innerWidth, window.innerHeight)
-        this.physics.world.setBoundsCollision(true, false, false, true)
+        // this.physics.world.setBounds(0, 0, window.innerWidth, window.innerHeight)
+        this.physics.world.setBoundsCollision(false, false, false, false)
 
         this.tileMap = this.make.tilemap({ key: 'tile-map', tileWidth: 32, tileHeight: 32 })
 
@@ -50,7 +37,7 @@ export default class Scene extends Phaser.Scene {
         const blockTileSet = this.tileMap.addTilesetImage('block', 'block')
 
         if (groundTileSet) {
-            const groundLayer = this.tileMap.createLayer('ground', groundTileSet, 0, -250)
+            const groundLayer = this.tileMap.createLayer('ground', groundTileSet, 0, 0)
             if (groundLayer) {
                 this.groundLayer = groundLayer
             }
@@ -123,16 +110,19 @@ export default class Scene extends Phaser.Scene {
         this.fire.setVelocityX(640)
         this.physics.add.collider(this.groundLayer, this.fire)
 
-        this.player = this.physics.add.sprite(300, 100, 'player')
+        this.player = this.physics.add.sprite(200 + 32, 448 - 32, 'player')
         this.player.setTint(0xffffff)
         this.player.body.setCollideWorldBounds(true)
+        this.player.setAngularVelocity(500)
         this.player.setVelocityX(640)
 
-        const win = this.add.zone(0, 0, 800, 450).setInteractive().setOrigin(0, 0)
-        win.setSize(800, 450)
-        const pauseScene = new Pause()
-        this.scene.add('pause', pauseScene, true)
-        // this.pauseButton = this.add.image(0, 0, 'pause-button').setOrigin(0, 0)
+        const win1 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
+        win1.setSize(800, 450)
+        this.scene.launch('pause')
+
+        const win2 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
+        win1.setSize(800, 450)
+        this.scene.launch('background')
 
         this.physics.add.collider(this.player, this.groundLayer)
         this.physics.add.collider(this.player, this.blockLayer, () => {
@@ -157,13 +147,20 @@ export default class Scene extends Phaser.Scene {
             }
         })
 
-        this.cameraFollowObject = this.physics.add.sprite(300, 100, 'player')
+        this.cameraFollowObject = this.physics.add.sprite(200, 448, 'player').setOrigin(0, 0)
+        this.cameraFollowObject.body.setAllowGravity(true)
         this.cameraFollowObject.setVisible(false)
         this.cameraFollowObject.setVelocityX(640)
         this.physics.add.collider(this.cameraFollowObject, this.groundLayer)
 
         this.camera = this.cameras.main.setSize(800, 450)
-        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -250, 100)
+        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 50)
+
+        console.log(this.player.width, this.player.displayWidth)
+        console.log('Camera position: ', this.cameras.main.x, this.cameras.main.y)
+        console.log('Player position: ', this.player.x, this.player.y)
+        console.log('Ground position: ', this.groundLayer.x, this.groundLayer.y)
+        console.log('Spike position: ', this.spikeLayer.x, this.spikeLayer.y)
     }
 
     public update(time: number, timeInterval: number): void {
@@ -179,9 +176,13 @@ export default class Scene extends Phaser.Scene {
                         this.fire.setVisible(true)
                     }
                     this.player.setAngularVelocity(0)
-                    this.player.setAngle(90)
+                    this.player.setAngle(82)
                 }
             }
+        }
+
+        if (this.player.y > 2000) {
+            this.restart()
         }
     }
 

@@ -1,4 +1,5 @@
-import Pause from "./Pause"
+import Background from './Background'
+import Pause from './Pause'
 
 export default class Start extends Phaser.Scene {
     private playButton: Phaser.GameObjects.Image
@@ -9,14 +10,10 @@ export default class Start extends Phaser.Scene {
         super('start')
     }
 
-    public preload(): void {
-        this.load.image('play-button', 'assets/buttons/GJ_playBtn_001.png')
-        this.load.image('player-button', 'assets/buttons/GJ_garageBtn_001.png')
-        this.load.image('mode-button', 'assets/buttons/GJ_moreGamesBtn_001.png')
-    }
+    public preload(): void {}
 
     public create(): void {
-        this.add.rectangle(0, 0, 800, 450, 0xffff00).setOrigin(0, 0)
+        // this.add.rectangle(0, 0, 800, 450, 0xffff00).setOrigin(0, 0)
         this.cameras.main.setSize(800, 450)
 
         this.playButton = this.add.image(400, 225, 'play-button')
@@ -45,7 +42,6 @@ export default class Start extends Phaser.Scene {
                 scale: 0.9,
                 duration: 100,
             })
-            // this.playerChoosingButton.setAlpha(0)
         })
         this.playerChoosingButton.on('pointerout', () => {
             this.add.tween({
@@ -54,16 +50,6 @@ export default class Start extends Phaser.Scene {
                 duration: 100,
             })
         })
-        // this.input.setDraggable(this.playerChoosingButton, true)
-        // this.playerChoosingButton.on('drag', (pointer: any, dragX: any, dragY: any) => {
-        //     this.playerChoosingButton.setX(dragX)
-        //     this.playerChoosingButton.setY(dragY)
-        // })
-        // // will disallow to drag the circle after 5 seconds
-        // this.time.addEvent({
-        //     delay: 5000,
-        //     callback: () => {this.input.setDraggable(this.playerChoosingButton, false)},
-        // })
 
         this.modeGameButton = this.add.image(600, 225, 'mode-button')
         this.modeGameButton.setInteractive()
@@ -82,8 +68,7 @@ export default class Start extends Phaser.Scene {
             })
         })
 
-        const win = this.add.zone(0, 0, 100, 100).setInteractive().setOrigin(0);
-        const pauseScene = new Pause()
-        // this.scene.add('pause', pauseScene, true)
+        const win = this.add.zone(0, 0, 800, 450).setOrigin(0)
+        this.scene.launch('background')
     }
 }

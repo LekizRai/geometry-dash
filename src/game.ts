@@ -12,10 +12,11 @@ const config: Phaser.Types.Core.GameConfig = {
         default: 'arcade',
         arcade: {
             gravity: { x: 0, y: 6400 },
-            debug: false,
+            debug: true,
         },
     },
     scale: {
+        mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     scene: [Preload, Start, Scene],
