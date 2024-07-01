@@ -13,10 +13,11 @@ export default class Start extends Phaser.Scene {
     public preload(): void {}
 
     public create(): void {
-        // this.add.rectangle(0, 0, 800, 450, 0xffff00).setOrigin(0, 0)
         this.cameras.main.setSize(800, 450)
 
-        this.playButton = this.add.image(400, 225, 'play-button')
+        this.add.image(150, 50, 'geometry-dash-logo').setOrigin(0, 0).setScale(1.2)
+
+        this.playButton = this.add.image(400, 250, 'play-button')
         this.playButton.setInteractive()
         this.playButton.on('pointerover', () => {
             this.playButton.setAlpha(0.8)
@@ -34,7 +35,7 @@ export default class Start extends Phaser.Scene {
             this.playButton.setAlpha(1)
         })
 
-        this.playerChoosingButton = this.add.sprite(200, 225, 'player-button')
+        this.playerChoosingButton = this.add.sprite(200, 250, 'player-button')
         this.playerChoosingButton.setInteractive()
         this.playerChoosingButton.on('pointerover', () => {
             this.add.tween({
@@ -51,7 +52,7 @@ export default class Start extends Phaser.Scene {
             })
         })
 
-        this.modeGameButton = this.add.image(600, 225, 'mode-button')
+        this.modeGameButton = this.add.image(600, 250, 'mode-button')
         this.modeGameButton.setInteractive()
         this.modeGameButton.on('pointerover', () => {
             this.add.tween({

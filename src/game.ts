@@ -3,6 +3,7 @@ import Phaser from 'phaser'
 import Preload from './scenes/Preload'
 import Start from './scenes/Start'
 import Scene from './scenes/Scene'
+import Init from './scenes/Init'
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
@@ -11,7 +12,7 @@ const config: Phaser.Types.Core.GameConfig = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { x: 0, y: 6400 },
+            gravity: { x: 0, y: 0 }, // 8264.46
             debug: true,
         },
     },
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
-    scene: [Preload, Start, Scene],
+    scene: [Init, Preload, Start, Scene],
 }
 
 export default new Phaser.Game(config)

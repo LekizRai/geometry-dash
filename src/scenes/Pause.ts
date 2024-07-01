@@ -17,7 +17,7 @@ export default class Pause extends Phaser.Scene {
             this.pauseButton.setVisible(true)
         })
 
-        this.pauseButton = this.add.image(724, 0, 'pause-button').setOrigin(0, 0).setInteractive()
+        this.pauseButton = this.add.image(700, 24, 'pause-button').setOrigin(0, 0).setInteractive()
         this.pauseButton.on('pointerdown', () => {
             this.scene.pause('game')
             this.scene.pause('background')

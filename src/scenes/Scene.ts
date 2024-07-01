@@ -1,17 +1,10 @@
-import Background from './Background'
-import Pause from './Pause'
-
-// Ground = 32 * (square + 1)
+import Player from '../player/Player'
 
 export default class Scene extends Phaser.Scene {
-    private player: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private fire: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private backgrounds: Phaser.Physics.Arcade.Group
+    private player: Player
 
     private tileMap: Phaser.Tilemaps.Tilemap
-    private groundLayer: Phaser.Tilemaps.TilemapLayer
-    private spikeLayer: Phaser.Tilemaps.TilemapLayer
-    private blockLayer: Phaser.Tilemaps.TilemapLayer
+    private foregroundLayer: Phaser.Tilemaps.TilemapLayer
 
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys
     private camera: Phaser.Cameras.Scene2D.Camera
@@ -27,94 +20,53 @@ export default class Scene extends Phaser.Scene {
 
     public create(): void {
         this.physics.world.TILE_BIAS = 32
-        // this.physics.world.setBounds(0, 0, window.innerWidth, window.innerHeight)
         this.physics.world.setBoundsCollision(false, false, false, false)
 
         this.tileMap = this.make.tilemap({ key: 'tile-map', tileWidth: 32, tileHeight: 32 })
 
-        const groundTileSet = this.tileMap.addTilesetImage('ground', 'ground')
-        const spikeTileSet = this.tileMap.addTilesetImage('spike', 'spike')
-        const blockTileSet = this.tileMap.addTilesetImage('block', 'block')
+        const foregroundTiledSet = this.tileMap.addTilesetImage('geometry-dash', 'geometry-dash')
 
-        if (groundTileSet) {
-            const groundLayer = this.tileMap.createLayer('ground', groundTileSet, 0, 0)
-            if (groundLayer) {
-                this.groundLayer = groundLayer
-            }
-            this.groundLayer.setCollisionByProperty({ isCollided: true })
-        }
-        this.groundLayer.setTint(0xffff00)
-
-        if (spikeTileSet) {
-            const spikeLayer = this.tileMap.createLayer('spike', spikeTileSet, 0, -282)
-            if (spikeLayer) {
-                this.spikeLayer = spikeLayer
-            }
-            this.spikeLayer.setCollisionByProperty({ isSpike: true })
-        }
-        this.spikeLayer.setTint(0xffff00)
-
-        if (blockTileSet) {
-            const blockLayer = this.tileMap.createLayer('block', blockTileSet, 0, -250)
-            if (blockLayer) {
-                this.blockLayer = blockLayer
-            }
-            this.blockLayer.setCollisionByProperty({ isBlock: true })
-        }
-        this.blockLayer.setTint(0xffff00)
-
-        const fireAnimation = this.anims.create({
-            key: 'fire',
-            frames: this.anims.generateFrameNames('fire', {
-                start: 1,
-                end: 9,
-                prefix: 'gj22_anim_50_00',
-            }),
-            repeat: -1,
-            frameRate: 15,
-        })
-        if (fireAnimation) {
-            fireAnimation.addFrame(
-                this.anims.generateFrameNames('fire', {
-                    start: 10,
-                    end: 12,
-                    prefix: 'gj22_anim_50_0',
-                })
+        if (foregroundTiledSet) {
+            const foregroundLayer = this.tileMap.createLayer(
+                'foreground',
+                foregroundTiledSet,
+                0,
+                448
             )
+            if (foregroundLayer) {
+                this.foregroundLayer = foregroundLayer
+            }
+            this.foregroundLayer.setCollisionByProperty({ isCollided: true })
         }
+        this.foregroundLayer.setTint(0xffffff)
 
-        const gameoverAnimation = this.anims.create({
-            key: 'gameover',
-            frames: this.anims.generateFrameNames('gameover', {
-                start: 1,
-                end: 9,
-                prefix: 'gj22_anim_28_00',
-            }),
-            frameRate: 15,
-        })
-        if (gameoverAnimation) {
-            gameoverAnimation.addFrame(
-                this.anims.generateFrameNames('gameover', {
-                    start: 10,
-                    end: 11,
-                    prefix: 'gj22_anim_28_0',
-                })
-            )
-        }
-
-        this.fire = this.physics.add.sprite(400 - 64 - 28 - 100, 50, 'fire').setScale(2)
-        this.fire.play('fire')
-        this.fire.setTint(0xffffff)
-        this.fire.body.setCollideWorldBounds(true)
-        this.fire.setVisible(false)
-        this.fire.setVelocityX(640)
-        this.physics.add.collider(this.groundLayer, this.fire)
-
-        this.player = this.physics.add.sprite(200 + 32, 448 - 32, 'player')
-        this.player.setTint(0xffffff)
-        this.player.body.setCollideWorldBounds(true)
-        this.player.setAngularVelocity(500)
+        this.player = new Player(this, 200 + 32, 1700)
+        this.player.setColor(0xffffff)
         this.player.setVelocityX(640)
+        this.player.setGravityY(8264.46)
+        this.player.collideWith(this.foregroundLayer, () => {})
+
+        this.cursors = this.input.keyboard!.createCursorKeys()
+        this.input.on('pointerdown', () => {
+            this.player.act()
+        })
+        this.input.keyboard?.on('keydown-SPACE', () => {
+            this.player.act()
+        })
+        this.input.keyboard?.on('keydown-UP', () => {
+            this.player.act()
+        })
+        this.input.keyboard?.on('keydown-DOWN', () => {
+            console.log(99)
+            this.player.changeState()
+        })
+
+        this.cameraFollowObject = this.physics.add.sprite(200, 1700 - 64, 'player')
+        this.cameraFollowObject.body.setAllowGravity(false)
+        this.cameraFollowObject.setVisible(false)
+
+        this.camera = this.cameras.main.setSize(800, 450).setZoom(0.75)
+        this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 50)
 
         const win1 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
         win1.setSize(800, 450)
@@ -124,78 +76,33 @@ export default class Scene extends Phaser.Scene {
         win1.setSize(800, 450)
         this.scene.launch('background')
 
-        this.physics.add.collider(this.player, this.groundLayer)
-        this.physics.add.collider(this.player, this.blockLayer, () => {
-            if (this.player.body.blocked.right) {
-                this.fire.setVisible(false)
-                this.player.setVisible(false)
-                this.restart()
-            }
-        })
-        this.physics.add.collider(this.player, this.spikeLayer, () => {
-            this.fire.setVisible(false)
-            this.player.setVisible(false)
-            this.restart()
-        })
-
-        this.cursors = this.input.keyboard!.createCursorKeys()
-        this.input.on('pointerdown', () => {
-            if (this.player.body.blocked.down) {
-                this.player.setVelocityY(-1280)
-                this.fire.setVisible(false)
-                this.player.setAngularVelocity(500)
-            }
-        })
-
-        this.cameraFollowObject = this.physics.add.sprite(200, 448, 'player').setOrigin(0, 0)
-        this.cameraFollowObject.body.setAllowGravity(true)
-        this.cameraFollowObject.setVisible(false)
-        this.cameraFollowObject.setVelocityX(640)
-        this.physics.add.collider(this.cameraFollowObject, this.groundLayer)
-
-        this.camera = this.cameras.main.setSize(800, 450)
-        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 50)
-
-        console.log(this.player.width, this.player.displayWidth)
+        console.log(typeof 0x001100)
         console.log('Camera position: ', this.cameras.main.x, this.cameras.main.y)
-        console.log('Player position: ', this.player.x, this.player.y)
-        console.log('Ground position: ', this.groundLayer.x, this.groundLayer.y)
-        console.log('Spike position: ', this.spikeLayer.x, this.spikeLayer.y)
+        console.log('Foreground position: ', this.foregroundLayer.x, this.foregroundLayer.y)
     }
 
     public update(time: number, timeInterval: number): void {
-        if (this.player.body.blocked.down) {
-            if (this.cursors.up.isDown || this.cursors.space.isDown) {
-                this.player.setVelocityY(-1280)
-                this.fire.setVisible(false)
-                this.player.setAngularVelocity(500)
-            } else {
-                if (!this.fire.visible) {
-                    if (this.player.visible) {
-                        this.fire.setY(this.player.y - 50)
-                        this.fire.setVisible(true)
-                    }
-                    this.player.setAngularVelocity(0)
-                    this.player.setAngle(82)
-                }
-            }
+
+        this.player.setVelocityX(640)
+        this.cameraFollowObject.setX(this.player.getX())
+
+        if (this.cursors.space.isDown || this.cursors.up.isDown) {
+            this.player.act()
         }
 
-        if (this.player.y > 2000) {
+        if (this.player.getY() > 2000) {
             this.restart()
         }
+
+        this.player.update()
     }
 
     public restart(): void {
         this.camera.shake(250, 0.01)
-
         this.time.addEvent({
             delay: 2000,
             callback: () => {
                 this.camera.resetFX()
-                this.anims.remove('fire')
-                this.anims.remove('gameover')
-                this.scene.remove('pause')
                 this.scene.stop()
                 this.scene.restart()
             },

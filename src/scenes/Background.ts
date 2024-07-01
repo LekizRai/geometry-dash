@@ -11,9 +11,9 @@ export default class Background extends Phaser.Scene {
             allowGravity: false,
             velocityX: -200,
         })
-        this.backgrounds.create(0, 0, 'background').setOrigin(0, 0)
-        this.backgrounds.create(512, 0, 'background').setOrigin(0, 0)
-        this.backgrounds.create(1024, 0, 'background').setOrigin(0, 0)
+        this.backgrounds.create(0, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
+        this.backgrounds.create(512, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
+        this.backgrounds.create(1024, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
 
         this.cameras.main.setViewport(0, 0, 800, 450)
         this.scene.sendToBack()
