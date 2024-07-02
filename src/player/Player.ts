@@ -1,3 +1,5 @@
+import GameMap from "../game-levels/GameMap"
+
 export default class Player {
     private scene: Phaser.Scene
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -111,13 +113,28 @@ export default class Player {
     }
 
     public collideWith(
-        obj: Phaser.GameObjects.GameObject,
-        callback: (
+        obj: Phaser.GameObjects.GameObject | GameMap,
+        callback?: (
             obj1: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject,
             obj2: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject
         ) => void
     ): void {
-        this.scene.physics.add.collider(obj, this.sprite, callback)
+        if (callback) {
+            if (obj instanceof Phaser.GameObjects.GameObject) {
+            this.scene.physics.add.collider(obj, this.sprite, callback)
+            }
+            else {
+                this.scene.physics.add.collider(obj.getForegroundLayer(), this.sprite, callback)
+            }
+        }
+        else {
+            if (obj instanceof Phaser.GameObjects.GameObject) {
+                this.scene.physics.add.collider(obj, this.sprite)
+                }
+                else {
+                    this.scene.physics.add.collider(obj.getForegroundLayer(), this.sprite)
+                }
+        }
     }
 
     public overlapWith(
