@@ -1,4 +1,4 @@
 export default class Ship {
     private scene: Phaser.Scene
-    private sprite: Phaser.
+    private sprite: any
 }

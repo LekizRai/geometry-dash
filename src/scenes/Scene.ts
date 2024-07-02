@@ -5,6 +5,7 @@ export default class Scene extends Phaser.Scene {
 
     private tileMap: Phaser.Tilemaps.Tilemap
     private foregroundLayer: Phaser.Tilemaps.TilemapLayer
+    private spikeList: Phaser.GameObjects.GameObject[]
 
     private cursors: Phaser.Types.Input.Keyboard.CursorKeys
     private camera: Phaser.Cameras.Scene2D.Camera
@@ -27,12 +28,7 @@ export default class Scene extends Phaser.Scene {
         const foregroundTiledSet = this.tileMap.addTilesetImage('geometry-dash', 'geometry-dash')
 
         if (foregroundTiledSet) {
-            const foregroundLayer = this.tileMap.createLayer(
-                'foreground',
-                foregroundTiledSet,
-                0,
-                448
-            )
+            const foregroundLayer = this.tileMap.createLayer('foreground', foregroundTiledSet, 0, 0)
             if (foregroundLayer) {
                 this.foregroundLayer = foregroundLayer
             }
@@ -40,11 +36,59 @@ export default class Scene extends Phaser.Scene {
         }
         this.foregroundLayer.setTint(0xffffff)
 
-        this.player = new Player(this, 200 + 32, 1700)
+        this.player = new Player(this, 300, 1000)
         this.player.setColor(0xffffff)
-        this.player.setVelocityX(640)
-        this.player.setGravityY(8264.46)
+        this.player.setVelocityX(1)
+        this.player.setGravityY(6198.35)
         this.player.collideWith(this.foregroundLayer, () => {})
+
+        this.spikeList = this.tileMap.createFromObjects('objects', {
+            name: 'spike',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        this.spikeList.forEach((spike: Phaser.GameObjects.GameObject): void => {
+            if (spike instanceof Phaser.Physics.Arcade.Sprite) {
+                spike.setY(spike.y + 1025)
+                spike.setX(spike.x - 512)
+                spike.setVisible(false)
+                this.physics.add.existing(spike)
+                this.player.collideWith(spike, () => {
+                    this.restart()
+                })
+            }
+        })
+
+        const flyingPortalList = this.tileMap.createFromObjects('objects', {
+            name: 'flying',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        flyingPortalList.forEach((portal: Phaser.GameObjects.GameObject): void => {
+            if (portal instanceof Phaser.Physics.Arcade.Sprite) {
+                portal.setY(portal.y + 1025)
+                portal.setX(portal.x - 512)
+                portal.setVisible(false)
+                this.physics.add.existing(portal)
+                this.player.overlapWith(portal, () => {
+                    this.player.changeToFlyingState()
+                })
+            }
+        })
+
+        const runningPortalList = this.tileMap.createFromObjects('objects', {
+            name: 'running',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        runningPortalList.forEach((portal: Phaser.GameObjects.GameObject): void => {
+            if (portal instanceof Phaser.Physics.Arcade.Sprite) {
+                portal.setY(portal.y + 1025)
+                portal.setX(portal.x - 512)
+                portal.setVisible(false)
+                this.physics.add.existing(portal)
+                this.player.overlapWith(portal, () => {
+                    this.player.changeToRunningState()
+                })
+            }
+        })
 
         this.cursors = this.input.keyboard!.createCursorKeys()
         this.input.on('pointerdown', () => {
@@ -57,16 +101,109 @@ export default class Scene extends Phaser.Scene {
             this.player.act()
         })
         this.input.keyboard?.on('keydown-DOWN', () => {
-            console.log(99)
-            this.player.changeState()
+            this.player.changeToFlyingState()
         })
 
-        this.cameraFollowObject = this.physics.add.sprite(200, 1700 - 64, 'player')
+        this.cameraFollowObject = this.physics.add.sprite(300, 1220, 'player')
         this.cameraFollowObject.body.setAllowGravity(false)
         this.cameraFollowObject.setVisible(false)
 
         this.camera = this.cameras.main.setSize(800, 450).setZoom(0.75)
-        this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 50)
+        this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
+
+        const cameraUpList = this.tileMap.createFromObjects('objects', {
+            name: 'camera-up',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        cameraUpList.forEach((cameraUp: Phaser.GameObjects.GameObject): void => {
+            if (cameraUp instanceof Phaser.Physics.Arcade.Sprite) {
+                cameraUp.setY(cameraUp.y + 1025)
+                cameraUp.setX(cameraUp.x - 512)
+                cameraUp.setVisible(false)
+                this.physics.add.existing(cameraUp)
+                this.player.overlapWith(cameraUp, () => {
+                    if (this.overlapStarted(cameraUp)) {
+                        this.add.tween({
+                            targets: this.cameraFollowObject,
+                            y: this.cameraFollowObject.y - 128,
+                            duration: 500,
+                        })
+                    }
+                })
+            }
+        })
+
+        const cameraHalfUpList = this.tileMap.createFromObjects('objects', {
+            name: 'camera-half-up',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        cameraHalfUpList.forEach((cameraHalfUp: Phaser.GameObjects.GameObject): void => {
+            if (cameraHalfUp instanceof Phaser.Physics.Arcade.Sprite) {
+                cameraHalfUp.setY(cameraHalfUp.y + 1025)
+                cameraHalfUp.setX(cameraHalfUp.x - 512)
+                cameraHalfUp.setVisible(false)
+                this.physics.add.existing(cameraHalfUp)
+                this.player.overlapWith(cameraHalfUp, () => {
+                    if (this.overlapStarted(cameraHalfUp)) {
+                        this.add.tween({
+                            targets: this.cameraFollowObject,
+                            y: this.cameraFollowObject.y - 64,
+                            duration: 500,
+                        })
+                    }
+                })
+            }
+        })
+
+        const cameraDownList = this.tileMap.createFromObjects('objects', {
+            name: 'camera-down',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        cameraDownList.forEach((cameraDown: Phaser.GameObjects.GameObject): void => {
+            if (cameraDown instanceof Phaser.Physics.Arcade.Sprite) {
+                cameraDown.setY(cameraDown.y + 1025)
+                cameraDown.setX(cameraDown.x - 512)
+                cameraDown.setVisible(false)
+                this.physics.add.existing(cameraDown)
+
+                console.log(cameraDown)
+
+                this.player.overlapWith(cameraDown, () => {
+                    if (this.overlapStarted(cameraDown)) {
+                        this.add.tween({
+                            targets: this.cameraFollowObject,
+                            y: this.cameraFollowObject.y + 128,
+                            duration: 500,
+                        })
+                    }
+                })
+            }
+        })
+
+        const cameraHalfDownList = this.tileMap.createFromObjects('objects', {
+            name: 'camera-half-down',
+            classType: Phaser.Physics.Arcade.Sprite,
+        })
+        cameraHalfDownList.forEach((cameraHalfDown: Phaser.GameObjects.GameObject): void => {
+            if (cameraHalfDown instanceof Phaser.Physics.Arcade.Sprite) {
+                cameraHalfDown.setY(cameraHalfDown.y + 1025)
+                cameraHalfDown.setX(cameraHalfDown.x - 512)
+                cameraHalfDown.setVisible(false)
+                this.physics.add.existing(cameraHalfDown)
+
+                console.log(cameraHalfDown)
+
+                this.player.overlapWith(cameraHalfDown, () => {
+                    if (this.overlapStarted(cameraHalfDown)) {
+                        this.add.tween({
+                            targets: this.cameraFollowObject,
+                            y: this.cameraFollowObject.y + 64,
+                            duration: 500,
+                        })
+                    }
+                })
+            }
+        })
 
         const win1 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
         win1.setSize(800, 450)
@@ -75,14 +212,9 @@ export default class Scene extends Phaser.Scene {
         const win2 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
         win1.setSize(800, 450)
         this.scene.launch('background')
-
-        console.log(typeof 0x001100)
-        console.log('Camera position: ', this.cameras.main.x, this.cameras.main.y)
-        console.log('Foreground position: ', this.foregroundLayer.x, this.foregroundLayer.y)
     }
 
     public update(time: number, timeInterval: number): void {
-
         this.player.setVelocityX(640)
         this.cameraFollowObject.setX(this.player.getX())
 
@@ -107,6 +239,21 @@ export default class Scene extends Phaser.Scene {
                 this.scene.restart()
             },
         })
+    }
+
+    public overlapStarted(obj: Phaser.Physics.Arcade.Sprite): boolean {
+        if (obj.body) {
+            console.log(obj.body.touching.none, obj.body.wasTouching.none)
+            return !obj.body.touching.none && obj.body.wasTouching.none
+        }
+        return false
+    }
+
+    public overlapEnded(obj: Phaser.Physics.Arcade.Sprite): boolean {
+        if (obj.body) {
+            return !obj.body.touching.none && obj.body.wasTouching.none
+        }
+        return false
     }
 }
 

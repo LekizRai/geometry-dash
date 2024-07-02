@@ -8,6 +8,6 @@ export default class PlayerState {
     }
 }
 
-export default class RunningState {
+class RunningState {
     
 }

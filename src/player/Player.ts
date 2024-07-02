@@ -1,7 +1,7 @@
 export default class Player {
     private scene: Phaser.Scene
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private ship: any
+    private ship: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private container: Phaser.GameObjects.Container
     private isRunning: boolean
 
@@ -9,24 +9,17 @@ export default class Player {
         this.scene = scene
         if (x) {
             if (y) {
-                this.container = this.scene.add.container(x, y)
-                // this.sprite = this.scene.physics.add.sprite(x, y, 'player')
+                this.sprite = this.scene.physics.add.sprite(x, y, 'player')
             } else {
-                this.container = this.scene.add.container(x, 0)
-                // this.sprite = this.scene.physics.add.sprite(x, 0, 'player')
+                this.sprite = this.scene.physics.add.sprite(x, 0, 'player')
             }
-            // this.scene.physics.add.sprite(200 + 32, 1700, 'player')
         } else {
-            this.container = this.scene.add.container(0, 0)
-            // this.sprite = this.scene.physics.add.sprite(0, 0, 'player')
+            this.sprite = this.scene.physics.add.sprite(0, 0, 'player')
         }
-        this.ship = this.scene.physics.add.sprite(0, 0, 'ship')
+        this.ship = this.scene.physics.add.sprite(this.sprite.x, this.sprite.y, 'ship')
         this.ship.setVisible(false)
-        this.sprite = this.scene.physics.add.sprite(0, 0, 'player')
+        this.ship.enableBody(false)
 
-        // this.container = this.scene.add.container(200 + 32, 1700)
-        this.container.add(this.sprite)
-        this.container.add(this.ship)
         this.isRunning = true
     }
 
@@ -85,7 +78,7 @@ export default class Player {
     public act(): void {
         if (this.isRunning) {
             if (this.sprite.body.blocked.down) {
-                this.sprite.setVelocityY(-1818.18)
+                this.sprite.setVelocityY(-1363.64)
                 this.scene.add.tween({
                     targets: this.sprite,
                     rotation: Math.PI,
@@ -95,28 +88,25 @@ export default class Player {
             }
         } else {
             this.sprite.setVelocityY(-200)
-            this.ship.setVelocityY(-200)
-
-            this.sprite.setRotation(10)
-            this.ship.setRotation(10)
-
-            console.log(this.container.x)
         }
     }
 
-    public changeState(): void {
-        this.isRunning = !this.isRunning
-        if (!this.isRunning) {
+    public changeToFlyingState(): void {
+        if (this.isRunning) {
+            this.isRunning = false
             this.ship.setVisible(true)
-            this.ship.setX(this.sprite.x)
-            this.ship.setY(this.sprite.y)
-            this.ship.setVelocityX(this.getVelocityX())
-            this.ship.setVelocityY(this.getVelocityY())
-            this.ship.setGravityY(200)
+            this.ship.enableBody(true)
+            this.sprite.setVelocityX(200)
             this.sprite.setGravityY(200)
-        } else {    
+        }
+    }
+
+    public changeToRunningState(): void {
+        if (!this.isRunning) {
+            this.isRunning = true
             this.ship.setVisible(false)
-            this.sprite.setGravityY(8264.46)
+            this.ship.enableBody(false)
+            this.sprite.setGravityY(6198.35)
         }
     }
 
@@ -128,15 +118,42 @@ export default class Player {
         ) => void
     ): void {
         this.scene.physics.add.collider(obj, this.sprite, callback)
-        // this.scene.physics.add.collider(obj, this.ship)
+    }
+
+    public overlapWith(
+        obj: Phaser.GameObjects.GameObject,
+        callback: (
+            obj1: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject,
+            obj2: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject
+        ) => void
+    ): void {
+        this.scene.physics.add.overlap(obj, this.sprite, callback)
     }
 
     public update(): void {
         if (!this.isRunning) {
-            const rotation: number = Math.atan(this.getVelocityY() / this.getVelocityX())
-            console.log(rotation)
+            let rotation: number = Math.atan(this.getVelocityY() / this.getVelocityX())
+            if (Number.isNaN(rotation)) {
+                rotation = 0
+            }
             this.sprite.setRotation(rotation)
             this.ship.setRotation(rotation)
+
+            const shiftX: number = Math.sqrt(
+                (Math.tan(rotation) * 30) ** 2 / (1 + Math.tan(rotation) ** 2)
+            )
+            let shiftY: number = shiftX / Math.tan(rotation)
+            if (Number.isNaN(shiftY)) {
+                shiftY = 30
+            }
+
+            if (shiftY > 0) {
+                this.ship.setX(this.sprite.x - shiftX)
+                this.ship.setY(this.sprite.y + shiftY)
+            } else {
+                this.ship.setX(this.sprite.x + shiftX)
+                this.ship.setY(this.sprite.y - shiftY)
+            }
         }
     }
 }
