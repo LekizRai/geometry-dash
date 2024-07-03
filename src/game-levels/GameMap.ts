@@ -10,14 +10,6 @@ export default class GameMap {
 
     private objectListDictionary: { [name: string]: Phaser.GameObjects.GameObject[] }
 
-    // private spikeList: Phaser.GameObjects.GameObject[]
-    // private flyingPortalList: Phaser.GameObjects.GameObject[]
-    // private runningPortalList: Phaser.GameObjects.GameObject[]
-    // private cameraHalfUpList: Phaser.GameObjects.GameObject[]
-    // private cameraUpList: Phaser.GameObjects.GameObject[]
-    // private cameraHalfDownList: Phaser.GameObjects.GameObject[]
-    // private cameraUpList: Phaser.GameObjects.GameObject[]
-
     constructor(scene: Phaser.Scene) {
         this.scene = scene
         this.level = 1
@@ -26,7 +18,12 @@ export default class GameMap {
 
     public load(level: number): void {
         this.level = level
-        this.tileMap = this.scene.make.tilemap({ key: 'tile-map', tileWidth: 32, tileHeight: 32 })
+        this.tileMap = this.scene.make.tilemap({
+            key: `tile-map-level-${level}`,
+            tileWidth: 32,
+            tileHeight: 32,
+        })
+        this.tileMap
         const foregroundTileSet = this.tileMap.addTilesetImage('geometry-dash', 'geometry-dash')
         if (foregroundTileSet) {
             const foregroundLayer = this.tileMap.createLayer('foreground', foregroundTileSet, 0, 0)
@@ -35,6 +32,7 @@ export default class GameMap {
             }
             this.foregroundLayer.setCollisionByProperty({ isCollided: true })
         }
+        console.log(this.tileMap.widthInPixels)
     }
 
     public initializeObjectList(name: string): void {
@@ -45,8 +43,8 @@ export default class GameMap {
         if (objectList.length > 0) {
             objectList.forEach((obj: Phaser.GameObjects.GameObject) => {
                 if (obj instanceof Phaser.Physics.Arcade.Sprite) {
-                    obj.setY(obj.y + 1025)
-                    obj.setX(obj.x + 1025)
+                    obj.setY(obj.y)
+                    obj.setX(obj.x)
                     obj.setVisible(false)
                     this.scene.physics.add.existing(obj)
                 }

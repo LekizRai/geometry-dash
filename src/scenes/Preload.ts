@@ -26,6 +26,7 @@ export default class Preload extends Phaser.Scene {
         // this.load.image('block', 'assets/blocks/spritesheet.png')
         this.load.image('geometry-dash', 'assets/abc/spritesheet.png')
         this.load.image('player', 'assets/players/player-30/player_30_001.png')
+        this.load.image('particle', 'assets/players/player-30/particle_00_001.png')
         this.load.image('ship', 'assets/players/ship_30/ship_30_001.png')
         this.load.image('pause-button', 'assets/buttons/GJ_pauseEditorBtn_001.png')
         this.load.atlas('fire', 'assets/fire/fire.png', 'assets/fire/fire_atlas.json')
@@ -34,7 +35,8 @@ export default class Preload extends Phaser.Scene {
         //     'assets/gameover/gameover.png',
         //     'assets/gameover/gameover_atlas.json'
         // )
-        this.load.tilemapTiledJSON('tile-map', 'assets/geometry-dash-tile-map.tmj')
+        this.load.tilemapTiledJSON('tile-map-level-1', 'assets/geometry-dash-tile-map-level-1.tmj')
+        this.load.tilemapTiledJSON('tile-map-level-2', 'assets/geometry-dash-tile-map-level-2.tmj')
 
         // Pause scene
         this.load.image('replay-button', 'assets/buttons/GJ_playBtn2_001.png')
