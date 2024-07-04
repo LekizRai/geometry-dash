@@ -5,7 +5,8 @@ export default class Player {
 
     private playerIndex: number
 
-    private rotationTween: Phaser.Tweens.Tween
+    private smallRotationTween: Phaser.Tweens.Tween
+    private bigRotationTween: Phaser.Tweens.Tween
 
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private particle: Phaser.GameObjects.Particles.ParticleEmitter
@@ -35,13 +36,21 @@ export default class Player {
 
         this.isRunning = true
 
-        this.rotationTween = this.scene.add.tween({
-            key: 'player-rotation',
+        this.smallRotationTween = this.scene.add.tween({
+            key: 'player-small-rotation',
             targets: this.sprite,
             rotation: Math.PI,
             duration: 440,
             persist: true,
-        })
+        }).pause()
+
+        this.bigRotationTween = this.scene.add.tween({
+            key: 'player-big-rotation',
+            targets: this.sprite,
+            rotation: Math.PI,
+            duration: 600,
+            persist: true,
+        }).pause()
     }
 
     public initialize(): void {
@@ -118,16 +127,28 @@ export default class Player {
         return this.sprite.body.blocked.right
     }
 
-    public act(): void {
-        if (this.isRunning) {
-            if (this.sprite.body.blocked.down) {
-                this.sprite.setVelocityY(-1193.18)
-                this.sprite.setRotation(0)
-                this.rotationTween.restart()
-            }
-        } else {
-            this.sprite.setVelocityY(-200)
-        }
+    public isBlockedDown(): boolean {
+        return this.sprite.body.blocked.down
+    }
+
+    public doSmallJump(): void {
+        this.sprite.setVelocityY(-1193.18)
+        this.sprite.setRotation(0)
+        this.smallRotationTween.restart()
+    }
+
+    public doBigJump(): void {
+        this.sprite.setVelocityY(-1759.77)
+        this.sprite.setRotation(0)
+        this.bigRotationTween.restart()
+    }
+
+    public fly(): void {
+        this.sprite.setVelocityY(-300)
+    }
+
+    public getIsRunning(): boolean {
+        return this.isRunning
     }
 
     public changeToFlyingState(): void {
@@ -136,23 +157,23 @@ export default class Player {
             this.ship.setVisible(true)
             this.ship.enableBody(true)
 
-            this.sprite.setScale(0.8)
-            this.sprite.setVelocityX(560)
-            this.sprite.setGravityY(200)
+            this.sprite.setScale(0.6)
+            this.sprite.setVelocityX(360)
+            this.sprite.setGravityY(600)
         }
     }
 
     public changeToRunningState(): void {
-            this.isRunning = true
-            this.ship.setVisible(false)
-            this.ship.enableBody(false)
+        this.isRunning = true
+        this.ship.setVisible(false)
+        this.ship.enableBody(false)
 
-            this.sprite.setScale(1)
-            this.sprite.setVisible(true)
-            this.sprite.setRotation(0)
-            this.sprite.setVelocityX(560)
-            this.sprite.setGravityY(4745.61)
-            this.setParticle()
+        this.sprite.setScale(1)
+        this.sprite.setVisible(true)
+        this.sprite.setRotation(0)
+        this.sprite.setVelocityX(560)
+        this.sprite.setGravityY(4745.61)
+        this.setParticle()
     }
 
     public collideWith(
@@ -245,8 +266,12 @@ export default class Player {
                 this.ship.setY(this.sprite.y - shiftY)
             }
         } else if (this.sprite.body.blocked.down) {
-            if (this.rotationTween.isPlaying()) {
-                this.rotationTween.pause()
+            if (this.smallRotationTween.isPlaying()) {
+                this.smallRotationTween.pause()
+                this.sprite.setRotation(0)
+            }
+            if (this.bigRotationTween.isPlaying()) {
+                this.bigRotationTween.pause()
                 this.sprite.setRotation(0)
             }
         }

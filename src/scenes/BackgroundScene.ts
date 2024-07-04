@@ -9,7 +9,7 @@ export default class Background extends Phaser.Scene {
     public create(): void {
         this.backgrounds = this.physics.add.group({
             allowGravity: false,
-            velocityX: -200,
+            velocityX: -100,
         })
         this.backgrounds.create(0, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
         this.backgrounds.create(512, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)

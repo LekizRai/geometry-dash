@@ -60,12 +60,26 @@ export default class Scene extends Phaser.Scene {
         this.gameMap.setForegroundColor(0x2dff06)
         this.mapWidth = this.gameMap.getWidth()
 
-        this.player = new Player(this, this.playerIndex, 300, 1050) // 1450
+        this.player = new Player(this, this.playerIndex, 300, 1450) // 1450
         this.player.setColor(0xffffff)
         this.player.setVelocityX(560)
         this.player.setGravityY(4745.61)
         this.player.setParticle()
         this.player.collideWith(this.gameMap, () => {})
+
+        // this.gameMap.initializeObjectList('cheat')
+        // this.gameMap.addActionToObjectList(
+        //     'cheat',
+        //     (cheat: Phaser.GameObjects.GameObject): void => {
+        //         if (cheat instanceof Phaser.Physics.Arcade.Sprite) {
+        //             this.player.overlapWith(cheat, () => {
+        //                 if (this.overlapStarted(cheat)) {
+        //                     this.player.doSmallJump()
+        //                 }
+        //             })
+        //         }
+        //     }
+        // )
 
         this.gameMap.initializeObjectList('spike')
         this.gameMap.addActionToObjectList(
@@ -99,7 +113,20 @@ export default class Scene extends Phaser.Scene {
             if (jump instanceof Phaser.Physics.Arcade.Sprite) {
                 this.player.overlapWith(jump, () => {
                     if (this.overlapStarted(jump)) {
-                        this.player.setVelocityY(-1789.77)
+                        this.player.doBigJump()
+                    }
+                })
+            }
+        })
+
+        this.gameMap.initializeObjectList('ring')
+        this.gameMap.addActionToObjectList('ring', (ring: Phaser.GameObjects.GameObject): void => {
+            if (ring instanceof Phaser.Physics.Arcade.Sprite) {
+                this.player.overlapWith(ring, () => {
+                    if (this.overlapStarted(ring)) {
+                        if (this.cursors.space.isDown || this.cursors.up.isDown) {
+                            this.player.doSmallJump()
+                        }
                     }
                 })
             }
@@ -263,16 +290,13 @@ export default class Scene extends Phaser.Scene {
 
         this.cursors = this.input.keyboard!.createCursorKeys()
         this.input.on('pointerdown', () => {
-            this.player.act()
-        })
-        this.input.keyboard?.on('keydown-SPACE', () => {
-            this.player.act()
-        })
-        this.input.keyboard?.on('keydown-UP', () => {
-            this.player.act()
-        })
-        this.input.keyboard?.on('keydown-DOWN', () => {
-            this.player.changeToFlyingState()
+            if (this.player.getIsRunning()) {
+                if (this.player.isBlockedDown()) {
+                    this.player.doSmallJump()
+                }
+            } else {
+                this.player.fly()
+            }
         })
 
         const win1 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
@@ -306,7 +330,13 @@ export default class Scene extends Phaser.Scene {
             this.cameraFollowObject.setX(this.player.getX())
 
             if (this.cursors.space.isDown || this.cursors.up.isDown) {
-                this.player.act()
+                if (this.player.getIsRunning()) {
+                    if (this.player.isBlockedDown()) {
+                        this.player.doSmallJump()
+                    }
+                } else {
+                    this.player.fly()
+                }
             }
 
             if (this.player.getY() > 2000) {
@@ -330,7 +360,10 @@ export default class Scene extends Phaser.Scene {
         this.audioManager.play(`audio-level-${this.level}`)
 
         this.player.setX(300)
-        this.player.setY(1050)
+        // this.player.setX(24950) Level 2
+        // this.player.setX(29875) Level 3
+        // this.player.setX(30000)
+        this.player.setY(1450)
         this.player.changeToRunningState()
 
         this.cameraFollowObject.setX(300)

@@ -6,7 +6,7 @@ export default class LevelChoosingScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.add.text(260, 50, 'Chooing your level', { fontFamily: 'Comic Sans MS', fontSize: 32 })
+        this.add.text(260, 50, 'Choose your level', { fontFamily: 'Comic Sans MS', fontSize: 32 })
         this.add
             .graphics({
                 fillStyle: {
@@ -24,6 +24,11 @@ export default class LevelChoosingScene extends Phaser.Scene {
             }
             this.scene.start('start')
         })
+        this.add.text(245, 213, '1', {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 20,
+            color: '#000000',
+        })
 
         const level2 = this.add.image(350, 225, 'level-button').setInteractive()
         level2.on('pointerdown', () => {
@@ -33,6 +38,11 @@ export default class LevelChoosingScene extends Phaser.Scene {
                 gameplayScene.setLevel(2)
             }
             this.scene.start('start')
+        })
+        this.add.text(345, 213, '2', {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 20,
+            color: '#000000',
         })
 
         const level3 = this.add.image(450, 225, 'level-button').setInteractive()
@@ -44,6 +54,11 @@ export default class LevelChoosingScene extends Phaser.Scene {
             }
             this.scene.start('start')
         })
+        this.add.text(445, 213, '3', {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 20,
+            color: '#000000',
+        })
 
         const level4 = this.add.image(550, 225, 'level-button').setInteractive()
         level4.on('pointerdown', () => {
@@ -53,6 +68,11 @@ export default class LevelChoosingScene extends Phaser.Scene {
                 gameplayScene.setLevel(4)
             }
             this.scene.start('start')
+        })
+        this.add.text(543, 213, '4', {
+            fontFamily: 'Comic Sans MS',
+            fontSize: 20,
+            color: '#000000',
         })
     }
 

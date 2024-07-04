@@ -6,7 +6,7 @@ export default class PlayerChoosingScene extends Phaser.Scene {
     }
 
     preload(): void {
-        this.add.text(250, 50, 'Chooing your player', { fontFamily: 'Comic Sans MS', fontSize: 32 })
+        this.add.text(250, 50, 'Choose your player', { fontFamily: 'Comic Sans MS', fontSize: 32 })
         this.add
             .graphics({
                 fillStyle: {
