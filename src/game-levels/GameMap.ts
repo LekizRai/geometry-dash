@@ -1,23 +1,18 @@
 export default class GameMap {
     private scene: Phaser.Scene
 
-    private level: number
-
     private tileMap: Phaser.Tilemaps.Tilemap
 
     private foregroundLayer: Phaser.Tilemaps.TilemapLayer
-    private objectsLayer: Phaser.Tilemaps.TilemapLayer
 
     private objectListDictionary: { [name: string]: Phaser.GameObjects.GameObject[] }
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene
-        this.level = 1
         this.objectListDictionary = {}
     }
 
     public load(level: number): void {
-        this.level = level
         this.tileMap = this.scene.make.tilemap({
             key: `tile-map-level-${level}`,
             tileWidth: 32,
@@ -27,12 +22,10 @@ export default class GameMap {
         if (foregroundTileSet) {
             const foregroundLayer = this.tileMap.createLayer('foreground', foregroundTileSet, 0, 0)
             if (foregroundLayer) {
-                console.log(this.foregroundLayer)
                 this.foregroundLayer = foregroundLayer
             }
             this.foregroundLayer.setCollisionByProperty({ isCollided: true })
         }
-        console.log(this.tileMap.widthInPixels)
     }
 
     public initializeObjectList(name: string): void {
@@ -62,6 +55,10 @@ export default class GameMap {
                 callback(obj)
             })
         }
+    }
+
+    public getWidth(): number {
+        return this.tileMap.widthInPixels
     }
 
     public getForegroundLayer(): Phaser.Tilemaps.TilemapLayer {

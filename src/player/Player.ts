@@ -3,6 +3,8 @@ import GameMap from '../game-levels/GameMap'
 export default class Player {
     private scene: Phaser.Scene
 
+    private playerIndex: number
+
     private rotationTween: Phaser.Tweens.Tween
 
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
@@ -10,18 +12,24 @@ export default class Player {
     private ship: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private isRunning: boolean
 
-    constructor(scene: Phaser.Scene, x?: number, y?: number, playerIndex?: number) {
+    constructor(scene: Phaser.Scene, playerIndex: number, x?: number, y?: number) {
         this.scene = scene
+        this.playerIndex = playerIndex
         if (x) {
             if (y) {
-                this.sprite = this.scene.physics.add.sprite(x, y, 'player-1')
+                this.sprite = this.scene.physics.add.sprite(x, y, `player-${playerIndex}`)
             } else {
-                this.sprite = this.scene.physics.add.sprite(x, 0, 'player-1')
+                this.sprite = this.scene.physics.add.sprite(x, 0, `player-${playerIndex}`)
             }
         } else {
-            this.sprite = this.scene.physics.add.sprite(0, 0, 'player-1')
+            this.sprite = this.scene.physics.add.sprite(0, 0, `player-${playerIndex}`)
         }
-        this.ship = this.scene.physics.add.sprite(this.sprite.x, this.sprite.y, 'ship-1')
+
+        this.ship = this.scene.physics.add.sprite(
+            this.sprite.x,
+            this.sprite.y,
+            `ship-${playerIndex}`
+        )
         this.ship.setVisible(false)
         this.ship.enableBody(false)
 
@@ -34,17 +42,6 @@ export default class Player {
             duration: 440,
             persist: true,
         })
-
-        this.particle = this.scene.add.particles(0, 0, 'particle-1', {
-            lifespan: 200,
-            angle: { min: -100, max: -80 },
-            scale: { start: 0.75, end: 0 },
-            speed: { min: 100, max: 200 },
-            alpha: { start: 1, end: 0 },
-            frequency: 50,
-            blendMode: 'ADD',
-        })
-        this.particle.startFollow(this.sprite, -32, 32)
     }
 
     public initialize(): void {
@@ -101,12 +98,24 @@ export default class Player {
         this.sprite.body.setGravityY(gravityY)
     }
 
+    public getAngularVelocity(): number {
+        return this.sprite.body.angularVelocity
+    }
+
+    public setAngularVelocity(speed: number): void {
+        this.sprite.setAngularVelocity(speed)
+    }
+
     public setColor(color: number): void {
         this.sprite.setTint(color)
     }
 
     public setVisible(status: boolean): void {
         this.sprite.setVisible(status)
+    }
+
+    public isBlockedRight(): boolean {
+        return this.sprite.body.blocked.right
     }
 
     public act(): void {
@@ -126,20 +135,24 @@ export default class Player {
             this.isRunning = false
             this.ship.setVisible(true)
             this.ship.enableBody(true)
+
+            this.sprite.setScale(0.8)
             this.sprite.setVelocityX(560)
             this.sprite.setGravityY(200)
         }
     }
 
     public changeToRunningState(): void {
-        if (!this.isRunning) {
             this.isRunning = true
             this.ship.setVisible(false)
             this.ship.enableBody(false)
+
+            this.sprite.setScale(1)
+            this.sprite.setVisible(true)
             this.sprite.setRotation(0)
             this.sprite.setVelocityX(560)
             this.sprite.setGravityY(4745.61)
-        }
+            this.setParticle()
     }
 
     public collideWith(
@@ -174,14 +187,37 @@ export default class Player {
         this.scene.physics.add.overlap(obj, this.sprite, callback)
     }
 
-    public burst(): void {
+    public setParticle(): void {
+        if (this.particle) {
+            this.particle.destroy()
+        }
+        this.particle = this.scene.add.particles(0, 0, `particle-${this.playerIndex}`, {
+            lifespan: 200,
+            angle: { min: -100, max: -80 },
+            scale: { start: 0.75, end: 0 },
+            speed: { min: 100, max: 200 },
+            alpha: { start: 1, end: 0 },
+            frequency: 50,
+            blendMode: 'ADD',
+        })
+        this.particle.startFollow(this.sprite, -32, 32)
+    }
+
+    public burstParticle(): void {
         this.particle.setParticleScale(0.75, 0.75)
         this.particle.setParticleLifespan(1000)
         this.particle.ops.angle.loadConfig({ angle: { min: 0, max: 360 } })
         this.particle.stopFollow()
         this.particle.explode(50, this.sprite.x, this.sprite.y)
+
         this.sprite.setVisible(false)
         this.sprite.setVelocityX(0)
+        this.sprite.setVelocityY(0)
+        this.sprite.setGravityX(0)
+        this.sprite.setGravityY(0)
+
+        this.ship.setVisible(false)
+        this.ship.enableBody(false)
     }
 
     public update(): void {

@@ -1,9 +1,9 @@
 import Phaser from 'phaser'
 
-import Preload from './scenes/Preload'
-import Start from './scenes/Start'
-import Scene from './scenes/Scene'
-import Init from './scenes/Init'
+import Preload from './scenes/PreloadScene'
+import Start from './scenes/start-scene/StartScene'
+import Scene from './scenes/GameplayScene'
+import Init from './scenes/InitScene'
 
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
