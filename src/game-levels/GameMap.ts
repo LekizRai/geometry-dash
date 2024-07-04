@@ -23,11 +23,11 @@ export default class GameMap {
             tileWidth: 32,
             tileHeight: 32,
         })
-        this.tileMap
         const foregroundTileSet = this.tileMap.addTilesetImage('geometry-dash', 'geometry-dash')
         if (foregroundTileSet) {
             const foregroundLayer = this.tileMap.createLayer('foreground', foregroundTileSet, 0, 0)
             if (foregroundLayer) {
+                console.log(this.foregroundLayer)
                 this.foregroundLayer = foregroundLayer
             }
             this.foregroundLayer.setCollisionByProperty({ isCollided: true })
@@ -68,7 +68,7 @@ export default class GameMap {
         return this.foregroundLayer
     }
 
-    public setForegroundTint(color: number): void {
+    public setForegroundColor(color: number): void {
         this.foregroundLayer.setTint(color)
     }
 

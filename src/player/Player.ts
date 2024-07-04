@@ -14,14 +14,14 @@ export default class Player {
         this.scene = scene
         if (x) {
             if (y) {
-                this.sprite = this.scene.physics.add.sprite(x, y, 'player')
+                this.sprite = this.scene.physics.add.sprite(x, y, 'player-1')
             } else {
-                this.sprite = this.scene.physics.add.sprite(x, 0, 'player')
+                this.sprite = this.scene.physics.add.sprite(x, 0, 'player-1')
             }
         } else {
-            this.sprite = this.scene.physics.add.sprite(0, 0, 'player')
+            this.sprite = this.scene.physics.add.sprite(0, 0, 'player-1')
         }
-        this.ship = this.scene.physics.add.sprite(this.sprite.x, this.sprite.y, 'ship')
+        this.ship = this.scene.physics.add.sprite(this.sprite.x, this.sprite.y, 'ship-1')
         this.ship.setVisible(false)
         this.ship.enableBody(false)
 
@@ -35,26 +35,22 @@ export default class Player {
             persist: true,
         })
 
-        this.particle = this.scene.add.particles(0, 0, 'particle', {
-            // frame: 'white',
-            // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
+        this.particle = this.scene.add.particles(0, 0, 'particle-1', {
             lifespan: 200,
             angle: { min: -100, max: -80 },
             scale: { start: 0.75, end: 0 },
             speed: { min: 100, max: 200 },
             alpha: { start: 1, end: 0 },
-            // advance: 20,
             frequency: 50,
             blendMode: 'ADD',
-            // emitting: false
-            // lifespan: 4000,
-            // speed: { min: 150, max: 250 },
-            // scale: { start: 0.8, end: 0 },
-            // gravityY: 150,
-            // blendMode: 'ADD',
-            // emitting: false
         })
         this.particle.startFollow(this.sprite, -32, 32)
+    }
+
+    public initialize(): void {
+        this.setVelocityX(560)
+        this.setGravityY(4745.61)
+        this.sprite.setVisible(true)
     }
 
     public getX(): number {
@@ -107,6 +103,10 @@ export default class Player {
 
     public setColor(color: number): void {
         this.sprite.setTint(color)
+    }
+
+    public setVisible(status: boolean): void {
+        this.sprite.setVisible(status)
     }
 
     public act(): void {
@@ -176,13 +176,11 @@ export default class Player {
 
     public burst(): void {
         this.particle.setParticleScale(0.75, 0.75)
-        // this.particle.setAlpha(1)
         this.particle.setParticleLifespan(1000)
-        this.particle.ops.angle.loadConfig({ angle: { min: 0, max: 360 } });
+        this.particle.ops.angle.loadConfig({ angle: { min: 0, max: 360 } })
         this.particle.stopFollow()
         this.particle.explode(50, this.sprite.x, this.sprite.y)
         this.sprite.setVisible(false)
-        this.sprite.disableBody()
         this.sprite.setVelocityX(0)
     }
 

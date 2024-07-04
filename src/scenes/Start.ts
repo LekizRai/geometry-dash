@@ -27,12 +27,8 @@ export default class Start extends Phaser.Scene {
         })
         this.playButton.on('pointerdown', () => {
             this.playButton.setAlpha(0.5)
-        })
-        this.playButton.on('pointerup', () => {
+            this.scene.stop('start')
             this.scene.start('game')
-        })
-        this.input.on('pointerup', () => {
-            this.playButton.setAlpha(1)
         })
 
         this.playerChoosingButton = this.add.sprite(200, 250, 'player-button')
@@ -50,6 +46,11 @@ export default class Start extends Phaser.Scene {
                 scale: 1,
                 duration: 100,
             })
+        })
+        this.playerChoosingButton.on('pointerdown', () => {
+            this.playButton.setAlpha(0.5)
+            this.scene.stop('start')
+            this.scene.start('player-choosing')
         })
 
         this.modeGameButton = this.add.image(600, 250, 'mode-button')

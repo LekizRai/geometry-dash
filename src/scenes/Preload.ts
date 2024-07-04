@@ -1,3 +1,4 @@
+import PlayerChoosingScene from '../player/PlayerChoosingScene'
 import Background from './Background'
 import Pause from './Pause'
 
@@ -9,38 +10,35 @@ export default class Preload extends Phaser.Scene {
     }
 
     public preload(): void {
+        // Audio
+        this.load.audio('audio-level-1', 'assets/audios/levels/level-1.mp3')
+
         // Preload scene
-        // this.load.image('progress-bar', 'assets/progress-bars/GJ_progressBar_001.png')
+        this.load.image('progress-bar', 'assets/images/preload/progress-bar.png')
 
         // Start scene
-        this.load.image('play-button', 'assets/buttons/GJ_playBtn_001.png')
-        this.load.image('player-button', 'assets/buttons/GJ_garageBtn_001.png')
-        this.load.image('mode-button', 'assets/buttons/GJ_moreGamesBtn_001.png')
-
-        // Background scene
+        this.load.image('play-button', 'assets/images/buttons/play.png')
+        this.load.image('player-button', 'assets/images/buttons/player-choosing.png')
+        this.load.image('mode-button', 'assets/images/buttons/more-game.png')
 
         // Game scene
-        this.load.image('background', 'assets/backgrounds/game_bg_01_001.png')
-        // this.load.image('ground', 'assets/grounds/groundSquare_01_001.png')
-        // this.load.image('spike', 'assets/spikes/spritesheet.png')
-        // this.load.image('block', 'assets/blocks/spritesheet.png')
-        this.load.image('geometry-dash', 'assets/abc/spritesheet.png')
-        this.load.image('player', 'assets/players/player-30/player_30_001.png')
-        this.load.image('particle', 'assets/players/player-30/particle_00_001.png')
-        this.load.image('ship', 'assets/players/ship_30/ship_30_001.png')
-        this.load.image('pause-button', 'assets/buttons/GJ_pauseEditorBtn_001.png')
-        this.load.atlas('fire', 'assets/fire/fire.png', 'assets/fire/fire_atlas.json')
-        // this.load.atlas(
-        //     'gameover',
-        //     'assets/gameover/gameover.png',
-        //     'assets/gameover/gameover_atlas.json'
-        // )
-        this.load.tilemapTiledJSON('tile-map-level-1', 'assets/geometry-dash-tile-map-level-1.tmj')
-        this.load.tilemapTiledJSON('tile-map-level-2', 'assets/geometry-dash-tile-map-level-2.tmj')
+        this.load.image('geometry-dash', 'assets/images/tileset/spritesheet.png')
+
+        this.load.image('player-1', 'assets/images/players/player-1/player.png')
+        this.load.image('particle-1', 'assets/images/players/player-1/particle.png')
+        this.load.image('ship-1', 'assets/images/players/player-1/ship.png')
+
+        this.load.image('player-2', 'assets/images/players/player-2/player.png')
+        this.load.image('particle-2', 'assets/images/players/player-2/particle.png')
+        this.load.image('ship-2', 'assets/images/players/player-2/ship.png')
+
+        this.load.tilemapTiledJSON('tile-map-level-1', 'assets/tilemaps/level-1.tmj')
+        this.load.tilemapTiledJSON('tile-map-level-2', 'assets/tilemaps/level-2.tmj')
 
         // Pause scene
-        this.load.image('replay-button', 'assets/buttons/GJ_playBtn2_001.png')
-        this.load.image('pause-button', 'assets/buttons/GJ_playBtn2_001.png')
+        this.load.image('resume-button', 'assets/images/buttons/resume.png')
+        this.load.image('menu-button', 'assets/images/buttons/menu.png')
+        this.load.image('pause-button', 'assets/images/buttons/pause.png')
 
         const loadingBarBackground = this.add.graphics({
             fillStyle: {
@@ -74,6 +72,9 @@ export default class Preload extends Phaser.Scene {
         const backgroundScene = new Background()
         this.scene.add('background', backgroundScene)
 
+        const playerChoosingScene = new PlayerChoosingScene()
+        this.scene.add('player-choosing', playerChoosingScene)
+
         const pauseScene = new Pause()
         this.scene.add('pause', pauseScene)
 
@@ -81,6 +82,7 @@ export default class Preload extends Phaser.Scene {
             delay: 500,
             callback: () => {
                 this.scene.stop('init')
+                this.scene.stop('preload')
                 this.scene.start('start')
             },
         })

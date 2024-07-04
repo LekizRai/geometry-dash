@@ -2,6 +2,11 @@ import GameMap from '../game-levels/GameMap'
 import Player from '../player/Player'
 
 export default class Scene extends Phaser.Scene {
+    private level: number
+    private playerIndex: number
+
+    private audio: Phaser.Sound.WebAudioSound
+
     private gameMap: GameMap
 
     private player: Player
@@ -14,30 +19,44 @@ export default class Scene extends Phaser.Scene {
 
     constructor() {
         super('game')
+        this.level = 1
+        this.playerIndex = 1
+    }
+
+    public getLevel(): number {
+        return this.level
+    }
+
+    public getPlayerIndex(): number {
+        return this.playerIndex
+    }
+
+    public setLevel(level: number): void {
+        this.level = level
+    }
+
+    public setPlayerIndex(playerIndex: number): void {
+        this.playerIndex = playerIndex
     }
 
     public preload(): void {}
 
     public create(): void {
+        // this.audio = this.sound.add('audio-level-1') as Phaser.Sound.WebAudioSound
+        // this.audio.play()
+
         this.physics.world.TILE_BIAS = 36
         this.physics.world.setBoundsCollision(false, false, false, false)
 
         this.gameMap = new GameMap(this)
-        this.gameMap.load(1)
-        this.gameMap.setForegroundTint(0x2dff06)
+        this.gameMap.load(this.level)
+        this.gameMap.setForegroundColor(0x2dff06)
 
         this.player = new Player(this, 300, 1050) // 1450
         this.player.setColor(0xffffff)
+        this.player.collideWith(this.gameMap, () => {})
         this.player.setVelocityX(560)
         this.player.setGravityY(4745.61)
-        this.player.collideWith(this.gameMap, () => {})
-
-        this.cameraFollowObject = this.physics.add.sprite(300, 1450, 'player')
-        this.cameraFollowObject.body.setAllowGravity(false)
-        this.cameraFollowObject.setVisible(false)
-
-        this.camera = this.cameras.main.setSize(800, 450).setZoom(0.75)
-        this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
 
         this.gameMap.initializeObjectList('spike')
         this.gameMap.addActionToObjectList(
@@ -46,9 +65,6 @@ export default class Scene extends Phaser.Scene {
                 if (spike instanceof Phaser.Physics.Arcade.Sprite) {
                     this.player.overlapWith(spike, () => {
                         if (this.overlapStarted(spike)) {
-                            spike.disableBody()
-                            this.physics.world.disable(spike)
-                            spike.setVisible(true)
                             this.player.burst()
                             this.restart()
                         }
@@ -168,6 +184,13 @@ export default class Scene extends Phaser.Scene {
             }
         )
 
+        this.cameraFollowObject = this.physics.add.sprite(300, 1450, 'player')
+        this.cameraFollowObject.body.setAllowGravity(false)
+        this.cameraFollowObject.setVisible(false)
+
+        this.camera = this.cameras.main.setSize(800, 450).setZoom(0.75)
+        this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
+
         this.cursors = this.input.keyboard!.createCursorKeys()
         this.input.on('pointerdown', () => {
             this.player.act()
@@ -192,7 +215,6 @@ export default class Scene extends Phaser.Scene {
     }
 
     public update(time: number, timeInterval: number): void {
-        // this.player.setVelocityX(640)
         this.player.update()
 
         this.cameraFollowObject.setX(this.player.getX())
@@ -212,8 +234,14 @@ export default class Scene extends Phaser.Scene {
             delay: 2000,
             callback: () => {
                 this.camera.resetFX()
-                this.scene.stop()
-                this.scene.restart()
+                this.player.setX(300)
+                this.player.setY(1050)
+                this.player.setVisible(true)
+                this.player.setVelocityX(560)
+                this.player.setGravityY(4745.61)
+
+                this.cameraFollowObject.setX(300)
+                this.cameraFollowObject.setY(1450)
             },
         })
     }
@@ -232,27 +260,3 @@ export default class Scene extends Phaser.Scene {
         return false
     }
 }
-
-// this.light.x = this.player.x
-// this.light.y = this.player.y
-
-// this.light = this.lights.addLight(this.player.x, this.player.y, 1000).setScrollFactor(0).setIntensity(5);
-// this.lights.enable().setAmbientColor(0x555555);
-
-// this.groundLayer.setPipeline('Light2D')
-// this.spikeLayer.setPipeline('Light2D')
-// this.player.setPipeline('Light2D')
-// this.fire.setPipeline('Light2D')
-// if (this.cursors.right.isDown) {
-//     this.player.setVelocityX(500)
-//     this.fire.setVelocityX(500)
-// } else if (this.cursors.left.isDown) {
-//     this.player.setVelocityX(-500)
-//     this.fire.setVelocityX(-500)
-// } else {
-//     this.player.setVelocityX(0)
-//     this.fire.setVelocityX(0)
-// }
-
-// 61 60 60 22
-// this.fire.setPosition(this.player.x, this.player.y - 100)

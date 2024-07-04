@@ -4,9 +4,9 @@ export default class Init extends Phaser.Scene {
     }
 
     public preload(): void {
-        this.load.image('background', 'assets/backgrounds/game_bg_01_001.png')
-        this.load.image('geometry-dash-logo', 'assets/preload/GJ_logo_001.png')
-        this.load.image('lite-logo', 'assets/preload/GJ_lite_001.png')
+        this.load.image('background', 'assets/images/backgrounds/background-1.png')
+        this.load.image('geometry-dash-logo', 'assets/images/preload/logo.png')
+        this.load.image('lite-logo', 'assets/images/preload/lite.png')
     }
 
     public create(): void {
