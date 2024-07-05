@@ -1,4 +1,6 @@
 import AudioManager from '../audio/AudioManager'
+import configs from '../configs/configs'
+import consts from '../configs/consts'
 import GameMap from '../game-levels/GameMap'
 import Player from '../player/Player'
 import PauseScene from './PauseScene'
@@ -7,8 +9,6 @@ export default class Scene extends Phaser.Scene {
     private level: number
     private playerIndex: number
 
-    // private audio: Phaser.Sound.WebAudioSound
-    private audio: Phaser.Sound.BaseSound
     private audioManager: AudioManager
 
     private gameMap: GameMap
@@ -52,34 +52,36 @@ export default class Scene extends Phaser.Scene {
 
         this.won = false
 
-        this.physics.world.TILE_BIAS = 36
+        this.physics.world.TILE_BIAS = consts.TILE_BIAS
         this.physics.world.setBoundsCollision(false, false, false, false)
 
         this.gameMap = new GameMap(this)
         this.gameMap.load(this.level)
-        this.gameMap.setForegroundColor(0x2dff06)
+        this.gameMap.setForegroundColor(consts.FOREGROUND.COLOR)
         this.mapWidth = this.gameMap.getWidth()
 
-        this.player = new Player(this, this.playerIndex, 300, 1450) // 1450
-        this.player.setColor(0xffffff)
-        this.player.setVelocityX(560)
-        this.player.setGravityY(4745.61)
+        this.player = new Player(this, this.playerIndex, consts.PLAYER.INIT_X, consts.PLAYER.INIT_Y)
+        this.player.setColor(consts.PLAYER.COLOR)
+        this.player.setVelocityX(consts.PLAYER.RUNNING.VELOCITY_X)
+        this.player.setGravityY(consts.PLAYER.RUNNING.GRAVITY_Y)
         this.player.setParticle()
         this.player.collideWith(this.gameMap, () => {})
 
-        // this.gameMap.initializeObjectList('cheat')
-        // this.gameMap.addActionToObjectList(
-        //     'cheat',
-        //     (cheat: Phaser.GameObjects.GameObject): void => {
-        //         if (cheat instanceof Phaser.Physics.Arcade.Sprite) {
-        //             this.player.overlapWith(cheat, () => {
-        //                 if (this.overlapStarted(cheat)) {
-        //                     this.player.doSmallJump()
-        //                 }
-        //             })
-        //         }
-        //     }
-        // )
+        if (configs.CHEATING) {
+            this.gameMap.initializeObjectList('cheat')
+            this.gameMap.addActionToObjectList(
+                'cheat',
+                (cheat: Phaser.GameObjects.GameObject): void => {
+                    if (cheat instanceof Phaser.Physics.Arcade.Sprite) {
+                        this.player.overlapWith(cheat, () => {
+                            if (this.overlapStarted(cheat)) {
+                                this.player.doSmallJump()
+                            }
+                        })
+                    }
+                }
+            )
+        }
 
         this.gameMap.initializeObjectList('spike')
         this.gameMap.addActionToObjectList(
@@ -281,11 +283,17 @@ export default class Scene extends Phaser.Scene {
             }
         )
 
-        this.cameraFollowObject = this.physics.add.sprite(300, 1450, 'player')
+        this.cameraFollowObject = this.physics.add.sprite(
+            consts.CAMERA_FOLLOW_OBJECT.INIT_X,
+            consts.CAMERA_FOLLOW_OBJECT.INIT_Y,
+            'player'
+        )
         this.cameraFollowObject.body.setAllowGravity(false)
         this.cameraFollowObject.setVisible(false)
 
-        this.camera = this.cameras.main.setSize(800, 450).setZoom(0.75)
+        this.camera = this.cameras.main
+            .setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
+            .setZoom(0.75)
         this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
 
         this.cursors = this.input.keyboard!.createCursorKeys()
@@ -299,16 +307,17 @@ export default class Scene extends Phaser.Scene {
             }
         })
 
-        const win1 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
-        win1.setSize(800, 450)
+        const win1 = this.add.zone(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT).setOrigin(0, 0)
+        win1.setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.launch('pause')
 
-        const win2 = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
-        win1.setSize(800, 450)
+        const win2 = this.add.zone(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT).setOrigin(0, 0)
+        win1.setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.launch('background')
     }
 
-    public update(time: number, timeInterval: number): void {
+    public update(): void {
+        this.cameraFollowObject.setX(this.player.getX())
         if (this.player.isBlockedRight()) {
             const value = localStorage.getItem(`level-${this.level}-best`)
             if (value) {
@@ -326,9 +335,6 @@ export default class Scene extends Phaser.Scene {
             this.doDeathEffect()
         } else {
             this.player.update()
-
-            this.cameraFollowObject.setX(this.player.getX())
-
             if (this.cursors.space.isDown || this.cursors.up.isDown) {
                 if (this.player.getIsRunning()) {
                     if (this.player.isBlockedDown()) {
@@ -337,10 +343,6 @@ export default class Scene extends Phaser.Scene {
                 } else {
                     this.player.fly()
                 }
-            }
-
-            if (this.player.getY() > 2000) {
-                this.doDeathEffect()
             }
         }
     }
@@ -359,18 +361,18 @@ export default class Scene extends Phaser.Scene {
         this.won = false
         this.audioManager.play(`audio-level-${this.level}`)
 
-        this.player.setX(300)
         // this.player.setX(24950) Level 2
         // this.player.setX(29875) Level 3
         // this.player.setX(30000)
-        this.player.setY(1450)
+        this.player.setX(consts.PLAYER.INIT_X)
+        this.player.setY(consts.PLAYER.INIT_Y)
         this.player.changeToRunningState()
 
-        this.cameraFollowObject.setX(300)
-        this.cameraFollowObject.setY(1450)
+        this.cameraFollowObject.setX(consts.CAMERA_FOLLOW_OBJECT.INIT_X)
+        this.cameraFollowObject.setY(consts.CAMERA_FOLLOW_OBJECT.INIT_Y)
 
         this.camera.resetFX()
-        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
+        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, consts.CAMERA.OFFSET_X, consts.CAMERA.OFFSET_Y)
     }
 
     public getCompletingPercent(): number {

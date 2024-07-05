@@ -1,3 +1,4 @@
+import consts from '../configs/consts'
 import GameMap from '../game-levels/GameMap'
 
 export default class Player {
@@ -36,27 +37,25 @@ export default class Player {
 
         this.isRunning = true
 
-        this.smallRotationTween = this.scene.add.tween({
-            key: 'player-small-rotation',
-            targets: this.sprite,
-            rotation: Math.PI,
-            duration: 440,
-            persist: true,
-        }).pause()
+        this.smallRotationTween = this.scene.add
+            .tween({
+                key: 'player-small-rotation',
+                targets: this.sprite,
+                rotation: Math.PI,
+                duration: 440,
+                persist: true,
+            })
+            .pause()
 
-        this.bigRotationTween = this.scene.add.tween({
-            key: 'player-big-rotation',
-            targets: this.sprite,
-            rotation: Math.PI,
-            duration: 600,
-            persist: true,
-        }).pause()
-    }
-
-    public initialize(): void {
-        this.setVelocityX(560)
-        this.setGravityY(4745.61)
-        this.sprite.setVisible(true)
+        this.bigRotationTween = this.scene.add
+            .tween({
+                key: 'player-big-rotation',
+                targets: this.sprite,
+                rotation: Math.PI,
+                duration: 600,
+                persist: true,
+            })
+            .pause()
     }
 
     public getX(): number {
@@ -132,19 +131,19 @@ export default class Player {
     }
 
     public doSmallJump(): void {
-        this.sprite.setVelocityY(-1193.18)
+        this.sprite.setVelocityY(consts.PLAYER.SMALL_JUMP_VELOCITY_Y)
         this.sprite.setRotation(0)
         this.smallRotationTween.restart()
     }
 
     public doBigJump(): void {
-        this.sprite.setVelocityY(-1759.77)
+        this.sprite.setVelocityY(consts.PLAYER.BIG_JUMP_VELOCITY_Y)
         this.sprite.setRotation(0)
         this.bigRotationTween.restart()
     }
 
     public fly(): void {
-        this.sprite.setVelocityY(-300)
+        this.sprite.setVelocityY(consts.PLAYER.FLYING.VELOCITY_Y)
     }
 
     public getIsRunning(): boolean {
@@ -157,9 +156,9 @@ export default class Player {
             this.ship.setVisible(true)
             this.ship.enableBody(true)
 
-            this.sprite.setScale(0.6)
-            this.sprite.setVelocityX(360)
-            this.sprite.setGravityY(600)
+            this.sprite.setScale(0.8)
+            this.sprite.setVelocityX(consts.PLAYER.FLYING.VELOCITY_X)
+            this.sprite.setGravityY(consts.PLAYER.FLYING.GRAVITY_Y)
         }
     }
 
@@ -171,8 +170,8 @@ export default class Player {
         this.sprite.setScale(1)
         this.sprite.setVisible(true)
         this.sprite.setRotation(0)
-        this.sprite.setVelocityX(560)
-        this.sprite.setGravityY(4745.61)
+        this.sprite.setVelocityX(consts.PLAYER.RUNNING.VELOCITY_X)
+        this.sprite.setGravityY(consts.PLAYER.RUNNING.GRAVITY_Y)
         this.setParticle()
     }
 
@@ -221,7 +220,7 @@ export default class Player {
             frequency: 50,
             blendMode: 'ADD',
         })
-        this.particle.startFollow(this.sprite, -32, 32)
+        this.particle.startFollow(this.sprite, consts.PARTICLE.OFFSET_X, consts.PARTICLE.OFFSET_Y)
     }
 
     public burstParticle(): void {

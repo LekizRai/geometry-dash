@@ -1,3 +1,6 @@
+import configs from "../configs/configs"
+import consts from "../configs/consts"
+
 export default class Background extends Phaser.Scene {
     private backgrounds: Phaser.Physics.Arcade.Group
     constructor() {
@@ -9,13 +12,13 @@ export default class Background extends Phaser.Scene {
     public create(): void {
         this.backgrounds = this.physics.add.group({
             allowGravity: false,
-            velocityX: -100,
+            velocityX: consts.BACKGROUND.VELOCITY_X,
         })
-        this.backgrounds.create(0, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
-        this.backgrounds.create(512, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
-        this.backgrounds.create(1024, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
+        this.backgrounds.create(0, 0, 'background').setOrigin(0, 0).setTint(consts.BACKGROUND.COLOR)
+        this.backgrounds.create(512, 0, 'background').setOrigin(0, 0).setTint(consts.BACKGROUND.COLOR)
+        this.backgrounds.create(1024, 0, 'background').setOrigin(0, 0).setTint(consts.BACKGROUND.COLOR)
 
-        this.cameras.main.setViewport(0, 0, 800, 450)
+        this.cameras.main.setViewport(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.sendToBack()
     }
 

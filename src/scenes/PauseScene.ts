@@ -1,9 +1,11 @@
 import AudioManager from '../audio/AudioManager'
+import configs from '../configs/configs'
+import consts from '../configs/consts'
 import GameplayScene from './GameplayScene'
 
 export default class Pause extends Phaser.Scene {
     private gameplayScene: GameplayScene
-    
+
     private audioManager: AudioManager
 
     private resumeButton: Phaser.GameObjects.Image
@@ -17,7 +19,6 @@ export default class Pause extends Phaser.Scene {
     private bestScore: Phaser.GameObjects.Text
 
     private congratsText: Phaser.GameObjects.Text
-    // private coin: Phaser.GameObjects.Text
 
     constructor() {
         super('pause')
@@ -121,7 +122,7 @@ export default class Pause extends Phaser.Scene {
             this.pauseButton.setVisible(false)
         })
 
-        this.cameras.main.setViewport(0, 0, 800, 450)
+        this.cameras.main.setViewport(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.bringToTop()
     }
 
@@ -133,14 +134,7 @@ export default class Pause extends Phaser.Scene {
         this.pauseButton.setVisible(false)
     }
 
-    public update(time: number, timeInterval: number): void {
-        // if (!this.gameplayScene) {
-        //     const gameplayScene = this.scene.manager.getScene('gameplay')
-        //     if (gameplayScene instanceof GameplayScene) {
-        //         this.gameplayScene = gameplayScene
-        //     }
-        // }
-
+    public update(): void {
         const value = localStorage.getItem(`level-${this.gameplayScene.getLevel()}-best`)
         if (value) {
             this.bestScore.setText(`Best score: ${value}%`)

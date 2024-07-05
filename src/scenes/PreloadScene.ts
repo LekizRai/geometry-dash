@@ -5,8 +5,6 @@ import LevelChoosingScene from './start-scene/LevelChoosingScene'
 import AudioManager from '../audio/AudioManager'
 
 export default class Preload extends Phaser.Scene {
-    private progressBar: Phaser.GameObjects.Image
-
     constructor() {
         super('preload')
     }
@@ -56,29 +54,24 @@ export default class Preload extends Phaser.Scene {
             },
         })
         this.load.on('progress', (percent: number) => {
-            loadingBar.fillRect(
-                94,
-                325,
-                612 * percent,
-                30
-            )
+            loadingBar.fillRect(94, 325, 612 * percent, 30)
         })
 
         this.add.image(400, 340, 'progress-bar').setScale(1.5)
     }
 
     public create(): void {
-        const backgroundScene = new Background()
-        this.scene.add('background', backgroundScene)
+        // const backgroundScene = new Background()
+        // this.scene.add('background', backgroundScene)
 
-        const playerChoosingScene = new PlayerChoosingScene()
-        this.scene.add('player-choosing', playerChoosingScene)
+        // const playerChoosingScene = new PlayerChoosingScene()
+        // this.scene.add('player-choosing', playerChoosingScene)
 
-        const levelChoosingScene = new LevelChoosingScene()
-        this.scene.add('level-choosing', levelChoosingScene)
+        // const levelChoosingScene = new LevelChoosingScene()
+        // this.scene.add('level-choosing', levelChoosingScene)
 
-        const pauseScene = new Pause()
-        this.scene.add('pause', pauseScene)
+        // const pauseScene = new Pause()
+        // this.scene.add('pause', pauseScene)
 
         const audioManager = AudioManager.getInstance()
         audioManager.add('audio-level-1', this.sound.add('audio-level-1'))
@@ -98,6 +91,4 @@ export default class Preload extends Phaser.Scene {
             },
         })
     }
-
-    public update(time: number, timeInterval: number): void {}
 }

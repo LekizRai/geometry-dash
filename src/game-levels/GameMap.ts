@@ -68,6 +68,4 @@ export default class GameMap {
     public setForegroundColor(color: number): void {
         this.foregroundLayer.setTint(color)
     }
-
-    public substract(): void {}
 }

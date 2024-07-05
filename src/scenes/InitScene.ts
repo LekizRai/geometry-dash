@@ -1,3 +1,6 @@
+import configs from "../configs/configs"
+import consts from "../configs/consts"
+
 export default class Init extends Phaser.Scene {
     constructor() {
         super('init')
@@ -11,12 +14,12 @@ export default class Init extends Phaser.Scene {
     }
 
     public create(): void {
-        this.add.image(0, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
-        this.add.image(512, 0, 'background').setOrigin(0, 0).setTint(0x0000ff)
+        this.add.image(0, 0, 'background').setOrigin(0, 0).setTint(consts.BACKGROUND.COLOR)
+        this.add.image(512, 0, 'background').setOrigin(0, 0).setTint(consts.BACKGROUND.COLOR)
         this.add.image(150, 100, 'geometry-dash-logo').setOrigin(0, 0).setScale(1.2)
         this.add.image(320, 180, 'lite-logo').setOrigin(0, 0).setScale(2)
-        const win = this.add.zone(0, 0, 800, 450).setOrigin(0, 0)
-        win.setSize(800, 450)
+        const win = this.add.zone(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT).setOrigin(0, 0)
+        win.setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.launch('preload')
     }
 

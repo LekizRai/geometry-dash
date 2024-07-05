@@ -1,4 +1,5 @@
-import GameplayScene from "../GameplayScene"
+import configs from '../../configs/configs'
+import GameplayScene from '../GameplayScene'
 
 export default class Start extends Phaser.Scene {
     private playButton: Phaser.GameObjects.Image
@@ -12,13 +13,19 @@ export default class Start extends Phaser.Scene {
     public preload(): void {}
 
     public create(): void {
-        this.cameras.main.setSize(800, 450)
+        this.cameras.main.setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
 
         this.add.image(150, 50, 'geometry-dash-logo').setOrigin(0, 0).setScale(1.2)
         const gameplayScene = this.scene.manager.getScene('gameplay')
         if (gameplayScene instanceof GameplayScene) {
-            this.add.text(310, 330, `Your player: ${gameplayScene.getPlayerIndex()}`, { fontFamily: 'Comic Sans MS', fontSize: 28})
-            this.add.text(320, 380, `Your level: ${gameplayScene.getLevel()}`, { fontFamily: 'Comic Sans MS', fontSize: 28})
+            this.add.text(310, 330, `Your player: ${gameplayScene.getPlayerIndex()}`, {
+                fontFamily: 'Comic Sans MS',
+                fontSize: 28,
+            })
+            this.add.text(320, 380, `Your level: ${gameplayScene.getLevel()}`, {
+                fontFamily: 'Comic Sans MS',
+                fontSize: 28,
+            })
         }
 
         this.playButton = this.add.image(400, 250, 'play-button')
@@ -77,7 +84,7 @@ export default class Start extends Phaser.Scene {
             this.scene.start('level-choosing')
         })
 
-        const win = this.add.zone(0, 0, 800, 450).setOrigin(0)
+        const win = this.add.zone(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT).setOrigin(0)
         this.scene.launch('background')
     }
 }
