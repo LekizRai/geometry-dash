@@ -28,7 +28,7 @@ export default class GameMap {
         }
     }
 
-    public initializeObjectList(name: string): void {
+    public initializeObjectList(name: string, callback: (obj: Phaser.GameObjects.GameObject) => void): void {
         const objectList = this.tileMap.createFromObjects('objects', {
             name: name,
             classType: Phaser.Physics.Arcade.Sprite,
@@ -43,17 +43,11 @@ export default class GameMap {
                 }
             })
             this.objectListDictionary[name] = objectList
-        }
-    }
-
-    public addActionToObjectList(
-        name: string,
-        callback: (obj: Phaser.GameObjects.GameObject) => void
-    ): void {
-        if (this.objectListDictionary[name]) {
-            this.objectListDictionary[name].forEach((obj: Phaser.GameObjects.GameObject): void => {
-                callback(obj)
-            })
+            if (this.objectListDictionary[name]) {
+                this.objectListDictionary[name].forEach((obj: Phaser.GameObjects.GameObject): void => {
+                    callback(obj)
+                })
+            }
         }
     }
 

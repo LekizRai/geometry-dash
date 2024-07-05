@@ -1,42 +1,42 @@
 import consts from '../configs/consts'
-import GameMap from '../game-levels/GameMap'
+import GameMap from '../game-map/GameMap'
+import GameplayScene from '../scenes/GameplayScene'
+import utils from '../utils/utils'
+import PlayerRunningState from './PlayerRunningState'
+import PlayerState from './PlayerState'
 
 export default class Player {
-    private scene: Phaser.Scene
+    private scene: GameplayScene
 
     private playerIndex: number
 
     private smallRotationTween: Phaser.Tweens.Tween
     private bigRotationTween: Phaser.Tweens.Tween
+    private tweenPausePrevented: boolean
 
     private sprite: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
     private particle: Phaser.GameObjects.Particles.ParticleEmitter
     private ship: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
-    private isRunning: boolean
 
-    constructor(scene: Phaser.Scene, playerIndex: number, x?: number, y?: number) {
+    private state: PlayerState
+
+    constructor(scene: GameplayScene, playerIndex: number) {
         this.scene = scene
+
         this.playerIndex = playerIndex
-        if (x) {
-            if (y) {
-                this.sprite = this.scene.physics.add.sprite(x, y, `player-${playerIndex}`)
-            } else {
-                this.sprite = this.scene.physics.add.sprite(x, 0, `player-${playerIndex}`)
-            }
-        } else {
-            this.sprite = this.scene.physics.add.sprite(0, 0, `player-${playerIndex}`)
-        }
+        this.sprite = this.scene.physics.add.sprite(
+            consts.PLAYER.INIT_X,
+            consts.PLAYER.INIT_Y,
+            `player-${playerIndex}`
+        )
 
         this.ship = this.scene.physics.add.sprite(
             this.sprite.x,
             this.sprite.y,
             `ship-${playerIndex}`
         )
-        this.ship.setVisible(false)
-        this.ship.enableBody(false)
 
-        this.isRunning = true
-
+        this.tweenPausePrevented = true
         this.smallRotationTween = this.scene.add
             .tween({
                 key: 'player-small-rotation',
@@ -46,7 +46,6 @@ export default class Player {
                 persist: true,
             })
             .pause()
-
         this.bigRotationTween = this.scene.add
             .tween({
                 key: 'player-big-rotation',
@@ -56,6 +55,23 @@ export default class Player {
                 persist: true,
             })
             .pause()
+
+        this.state = new PlayerRunningState(this)
+    }
+
+    public reset(): void {
+        this.enableShip(false)
+        this.setVelocityX(0)
+        this.setVelocityY(0)
+        this.setGravityX(0)
+        this.setGravityY(0)
+        this.setVisible(false)
+        this.setRotation(0)
+        this.setScale(1)
+    }
+
+    public setState(state: PlayerState): void {
+        this.state = state
     }
 
     public getX(): number {
@@ -122,6 +138,14 @@ export default class Player {
         this.sprite.setVisible(status)
     }
 
+    public setScale(scale: number): void {
+        this.sprite.setScale(scale)
+    }
+
+    public setRotation(rotation: number): void {
+        this.sprite.setRotation(rotation)
+    }
+
     public isBlockedRight(): boolean {
         return this.sprite.body.blocked.right
     }
@@ -130,52 +154,77 @@ export default class Player {
         return this.sprite.body.blocked.down
     }
 
+    public pauseTween(): void {
+        if (this.smallRotationTween.isPlaying()) {
+            this.smallRotationTween.pause()
+            this.setRotation(0)
+        }
+        if (this.bigRotationTween.isPlaying()) {
+            console.log(9999)
+            this.bigRotationTween.pause()
+            this.setRotation(0)
+        }
+    }
+
+    public getTweenElapsedTime(): number {
+        if (this.smallRotationTween.isPlaying()) {
+            return this.smallRotationTween.elapsed
+        }
+        if (this.bigRotationTween.isPlaying()) {
+            return this.bigRotationTween.elapsed
+        }
+        return 1e9
+    }
+
     public doSmallJump(): void {
         this.sprite.setVelocityY(consts.PLAYER.SMALL_JUMP_VELOCITY_Y)
         this.sprite.setRotation(0)
         this.smallRotationTween.restart()
+        this.tweenPausePrevented = true
     }
 
     public doBigJump(): void {
         this.sprite.setVelocityY(consts.PLAYER.BIG_JUMP_VELOCITY_Y)
         this.sprite.setRotation(0)
         this.bigRotationTween.restart()
+        this.tweenPausePrevented = true
     }
 
-    public fly(): void {
+    public doFlyUp(): void {
         this.sprite.setVelocityY(consts.PLAYER.FLYING.VELOCITY_Y)
     }
 
-    public getIsRunning(): boolean {
-        return this.isRunning
-    }
-
-    public changeToFlyingState(): void {
-        if (this.isRunning) {
-            this.isRunning = false
+    public enableShip(status: boolean): void {
+        if (status) {
             this.ship.setVisible(true)
             this.ship.enableBody(true)
-
-            this.sprite.setScale(0.8)
-            this.sprite.setVelocityX(consts.PLAYER.FLYING.VELOCITY_X)
-            this.sprite.setGravityY(consts.PLAYER.FLYING.GRAVITY_Y)
+        } else {
+            this.ship.setVisible(false)
+            this.ship.enableBody(false)
         }
     }
 
-    public changeToRunningState(): void {
-        this.isRunning = true
-        this.ship.setVisible(false)
-        this.ship.enableBody(false)
+    public stickShip(rotation: number): void {
+        this.ship.setRotation(rotation)
 
-        this.sprite.setScale(1)
-        this.sprite.setVisible(true)
-        this.sprite.setRotation(0)
-        this.sprite.setVelocityX(consts.PLAYER.RUNNING.VELOCITY_X)
-        this.sprite.setGravityY(consts.PLAYER.RUNNING.GRAVITY_Y)
-        this.setParticle()
+        const shiftX: number = Math.sqrt(
+            (Math.tan(rotation) * 30) ** 2 / (1 + Math.tan(rotation) ** 2)
+        )
+        let shiftY: number = shiftX / Math.tan(rotation)
+        if (Number.isNaN(shiftY)) {
+            shiftY = 30
+        }
+
+        if (shiftY > 0) {
+            this.ship.setX(this.sprite.x - shiftX)
+            this.ship.setY(this.sprite.y + shiftY)
+        } else {
+            this.ship.setX(this.sprite.x + shiftX)
+            this.ship.setY(this.sprite.y - shiftY)
+        }
     }
 
-    public collideWith(
+    public onCollideWith(
         obj: Phaser.GameObjects.GameObject | GameMap,
         callback?: (
             obj1: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject,
@@ -197,17 +246,31 @@ export default class Player {
         }
     }
 
-    public overlapWith(
+    // public onOverlapWith(
+    //     obj: Phaser.GameObjects.GameObject,
+    //     callback: (
+    //         obj1: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject,
+    //         obj2: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject
+    //     ) => void
+    // ): void {
+    //     this.scene.physics.add.overlap(obj, this.sprite, callback)
+    // }
+
+    public onStartOverlapWith(
         obj: Phaser.GameObjects.GameObject,
         callback: (
             obj1: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject,
             obj2: Phaser.Tilemaps.Tile | Phaser.GameObjects.GameObject
         ) => void
     ): void {
-        this.scene.physics.add.overlap(obj, this.sprite, callback)
+        this.scene.physics.add.overlap(obj, this.sprite, (obj1, obj2) => {
+            if (obj instanceof Phaser.Physics.Arcade.Sprite && utils.isOverlapStarted(obj)) {
+                callback(obj1, obj2)
+            }
+        })
     }
 
-    public setParticle(): void {
+    public resetParticle(): void {
         if (this.particle) {
             this.particle.destroy()
         }
@@ -229,50 +292,26 @@ export default class Player {
         this.particle.ops.angle.loadConfig({ angle: { min: 0, max: 360 } })
         this.particle.stopFollow()
         this.particle.explode(50, this.sprite.x, this.sprite.y)
-
-        this.sprite.setVisible(false)
-        this.sprite.setVelocityX(0)
-        this.sprite.setVelocityY(0)
-        this.sprite.setGravityX(0)
-        this.sprite.setGravityY(0)
-
-        this.ship.setVisible(false)
-        this.ship.enableBody(false)
     }
 
-    public update(): void {
-        if (!this.isRunning) {
-            let rotation: number = Math.atan(this.getVelocityY() / this.getVelocityX())
-            if (Number.isNaN(rotation)) {
-                rotation = 0
+    public updateBestScore(): void {
+        const value = localStorage.getItem(`level-${this.scene.getLevel()}-best`)
+        if (value) {
+            let bestScore: number = Number(value)
+            if (Math.ceil(this.scene.getCompletingPercent() * 100) > bestScore) {
+                bestScore = Math.ceil(this.scene.getCompletingPercent() * 100)
+                localStorage.setItem(`level-${this.scene.getLevel()}-best`, String(bestScore))
             }
-            this.sprite.setRotation(rotation)
-            this.ship.setRotation(rotation)
-
-            const shiftX: number = Math.sqrt(
-                (Math.tan(rotation) * 30) ** 2 / (1 + Math.tan(rotation) ** 2)
-            )
-            let shiftY: number = shiftX / Math.tan(rotation)
-            if (Number.isNaN(shiftY)) {
-                shiftY = 30
-            }
-
-            if (shiftY > 0) {
-                this.ship.setX(this.sprite.x - shiftX)
-                this.ship.setY(this.sprite.y + shiftY)
-            } else {
-                this.ship.setX(this.sprite.x + shiftX)
-                this.ship.setY(this.sprite.y - shiftY)
-            }
-        } else if (this.sprite.body.blocked.down) {
-            if (this.smallRotationTween.isPlaying()) {
-                this.smallRotationTween.pause()
-                this.sprite.setRotation(0)
-            }
-            if (this.bigRotationTween.isPlaying()) {
-                this.bigRotationTween.pause()
-                this.sprite.setRotation(0)
-            }
+        } else {
+            localStorage.setItem(`level-${this.scene.getLevel()}-best`, '0')
         }
+    }
+
+    public update() {
+        this.state.update(this)
+    }
+
+    public handleInput(key: string) {
+        this.state.handleInput(key, this)
     }
 }

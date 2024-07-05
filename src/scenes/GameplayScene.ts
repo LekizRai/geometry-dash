@@ -1,8 +1,9 @@
 import AudioManager from '../audio/AudioManager'
 import configs from '../configs/configs'
 import consts from '../configs/consts'
-import GameMap from '../game-levels/GameMap'
+import GameMap from '../game-map/GameMap'
 import Player from '../player/Player'
+import PlayerFlyingState from '../player/PlayerFlyingState'
 import PauseScene from './PauseScene'
 
 export default class Scene extends Phaser.Scene {
@@ -16,7 +17,8 @@ export default class Scene extends Phaser.Scene {
 
     private player: Player
 
-    private cursors: Phaser.Types.Input.Keyboard.CursorKeys
+    private cursor: Phaser.Types.Input.Keyboard.CursorKeys
+    private pointer: Phaser.Input.Pointer
     private camera: Phaser.Cameras.Scene2D.Camera
     private cameraFollowObject: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody
 
@@ -48,236 +50,153 @@ export default class Scene extends Phaser.Scene {
     public preload(): void {}
 
     public create(): void {
-        this.audioManager.play(`audio-level-${this.level}`)
+        if (this.input.keyboard) {
+            this.cursor = this.input.keyboard!.createCursorKeys()
+        }
+        this.pointer = this.input.activePointer
 
         this.won = false
 
         this.physics.world.TILE_BIAS = consts.TILE_BIAS
         this.physics.world.setBoundsCollision(false, false, false, false)
 
+        this.audioManager.play(`audio-level-${this.level}`)
+
         this.gameMap = new GameMap(this)
         this.gameMap.load(this.level)
         this.gameMap.setForegroundColor(consts.FOREGROUND.COLOR)
         this.mapWidth = this.gameMap.getWidth()
 
-        this.player = new Player(this, this.playerIndex, consts.PLAYER.INIT_X, consts.PLAYER.INIT_Y)
+        this.player = new Player(this, this.playerIndex)
         this.player.setColor(consts.PLAYER.COLOR)
-        this.player.setVelocityX(consts.PLAYER.RUNNING.VELOCITY_X)
-        this.player.setGravityY(consts.PLAYER.RUNNING.GRAVITY_Y)
-        this.player.setParticle()
-        this.player.collideWith(this.gameMap, () => {})
+        this.player.onCollideWith(this.gameMap, () => {})
+
+        this.input.keyboard?.on('keydown-A', () => {
+            this.player.setState(new PlayerFlyingState(this.player))
+        })
 
         if (configs.CHEATING) {
-            this.gameMap.initializeObjectList('cheat')
-            this.gameMap.addActionToObjectList(
+            this.gameMap.initializeObjectList(
                 'cheat',
                 (cheat: Phaser.GameObjects.GameObject): void => {
                     if (cheat instanceof Phaser.Physics.Arcade.Sprite) {
-                        this.player.overlapWith(cheat, () => {
-                            if (this.overlapStarted(cheat)) {
-                                this.player.doSmallJump()
-                            }
+                        this.player.onStartOverlapWith(cheat, () => {
+                            this.player.doSmallJump()
                         })
                     }
                 }
             )
         }
 
-        this.gameMap.initializeObjectList('spike')
-        this.gameMap.addActionToObjectList(
-            'spike',
-            (spike: Phaser.GameObjects.GameObject): void => {
-                if (spike instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(spike, () => {
-                        const value = localStorage.getItem(`level-${this.level}-best`)
-                        if (value) {
-                            let bestScore: number = Number(value)
-                            if (Math.ceil(this.getCompletingPercent() * 100) > bestScore) {
-                                bestScore = Math.ceil(this.getCompletingPercent() * 100)
-                                localStorage.setItem(`level-${this.level}-best`, String(bestScore))
-                            }
-                        } else {
-                            localStorage.setItem(`level-${this.level}-best`, '0')
-                        }
-                        if (this.overlapStarted(spike)) {
-                            this.audioManager.stop(`audio-level-${this.level}`)
-                            this.audioManager.play('audio-dead')
-                            this.player.burstParticle()
-                            this.doDeathEffect()
-                        }
-                    })
-                }
+        this.gameMap.initializeObjectList('spike', (spike: Phaser.GameObjects.GameObject): void => {
+            if (spike instanceof Phaser.Physics.Arcade.Sprite) {
+                this.player.onStartOverlapWith(spike, () => {
+                    this.handleInput('dead')
+                    this.player.handleInput('dead')
+                })
             }
-        )
+        })
 
-        this.gameMap.initializeObjectList('jump')
-        this.gameMap.addActionToObjectList('jump', (jump: Phaser.GameObjects.GameObject): void => {
+        this.gameMap.initializeObjectList('jump', (jump: Phaser.GameObjects.GameObject): void => {
             if (jump instanceof Phaser.Physics.Arcade.Sprite) {
-                this.player.overlapWith(jump, () => {
-                    if (this.overlapStarted(jump)) {
-                        this.player.doBigJump()
-                    }
+                this.player.onStartOverlapWith(jump, () => {
+                    this.player.handleInput('jump')
                 })
             }
         })
 
-        this.gameMap.initializeObjectList('ring')
-        this.gameMap.addActionToObjectList('ring', (ring: Phaser.GameObjects.GameObject): void => {
+        this.gameMap.initializeObjectList('ring', (ring: Phaser.GameObjects.GameObject): void => {
             if (ring instanceof Phaser.Physics.Arcade.Sprite) {
-                this.player.overlapWith(ring, () => {
-                    if (this.overlapStarted(ring)) {
-                        if (this.cursors.space.isDown || this.cursors.up.isDown) {
-                            this.player.doSmallJump()
-                        }
+                this.player.onStartOverlapWith(ring, () => {
+                    if (this.cursor.space.isDown || this.cursor.up.isDown || this.pointer.isDown) {
+                        this.player.handleInput('hit')
                     }
                 })
             }
         })
 
-        this.gameMap.initializeObjectList('win-start')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'win-start',
             (win: Phaser.GameObjects.GameObject): void => {
                 if (win instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(win, () => {
-                        if (this.overlapStarted(win)) {
-                            this.audioManager.stop(`audio-level-${this.level}`)
-                            this.camera.stopFollow()
-                            this.player.setGravityY(0)
-                            this.player.setVelocityX(0)
-                            this.player.setVelocityY(-300)
-                            this.player.setGravityX(1000)
-                        }
+                    this.player.onStartOverlapWith(win, () => {
+                        this.handleInput('win-start')
+                        this.player.handleInput('win-start')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('win-end')
-        this.gameMap.addActionToObjectList(
-            'win-end',
-            (win: Phaser.GameObjects.GameObject): void => {
-                if (win instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(win, () => {
-                        this.won = true
-                        const value = localStorage.getItem(`level-${this.level}-best`)
-                        if (value) {
-                            let bestScore: number = Number(value)
-                            if (Math.ceil(this.getCompletingPercent() * 100) > bestScore) {
-                                bestScore = Math.ceil(this.getCompletingPercent() * 100)
-                                localStorage.setItem(`level-${this.level}-best`, String(bestScore))
-                            }
-                        } else {
-                            localStorage.setItem(`level-${this.level}-best`, '0')
-                        }
-                        if (this.overlapStarted(win)) {
-                            this.player.burstParticle()
-                            const pauseScene = this.scene.manager.getScene('pause')
-                            if (pauseScene instanceof PauseScene) {
-                                this.audioManager.play('audio-win')
-                                pauseScene.displayWinWindow()
-                            }
-                        }
-                    })
-                }
+        this.gameMap.initializeObjectList('win-end', (win: Phaser.GameObjects.GameObject): void => {
+            if (win instanceof Phaser.Physics.Arcade.Sprite) {
+                this.player.onStartOverlapWith(win, () => {
+                    this.handleInput('win-end')
+                    this.player.handleInput('win-end')
+                })
             }
-        )
+        })
 
-        this.gameMap.initializeObjectList('camera-up')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'camera-up',
             (cameraUp: Phaser.GameObjects.GameObject): void => {
                 if (cameraUp instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(cameraUp, () => {
-                        if (this.overlapStarted(cameraUp)) {
-                            this.add.tween({
-                                targets: this.cameraFollowObject,
-                                y: this.cameraFollowObject.y - 128,
-                                duration: 500,
-                            })
-                        }
+                    this.player.onStartOverlapWith(cameraUp, () => {
+                        this.handleInput('camera-up')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('camera-down')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'camera-down',
             (cameraDown: Phaser.GameObjects.GameObject): void => {
                 if (cameraDown instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(cameraDown, () => {
-                        if (this.overlapStarted(cameraDown)) {
-                            this.add.tween({
-                                targets: this.cameraFollowObject,
-                                y: this.cameraFollowObject.y + 128,
-                                duration: 500,
-                            })
-                        }
+                    this.player.onStartOverlapWith(cameraDown, () => {
+                        this.handleInput('camera-down')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('camera-half-up')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'camera-half-up',
             (cameraHalfUp: Phaser.GameObjects.GameObject): void => {
                 if (cameraHalfUp instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(cameraHalfUp, () => {
-                        if (this.overlapStarted(cameraHalfUp)) {
-                            this.add.tween({
-                                targets: this.cameraFollowObject,
-                                y: this.cameraFollowObject.y - 64,
-                                duration: 500,
-                            })
-                        }
+                    this.player.onStartOverlapWith(cameraHalfUp, () => {
+                        this.handleInput('camera-half-up')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('camera-half-down')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'camera-half-down',
             (cameraHalfDown: Phaser.GameObjects.GameObject): void => {
                 if (cameraHalfDown instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(cameraHalfDown, () => {
-                        if (this.overlapStarted(cameraHalfDown)) {
-                            this.add.tween({
-                                targets: this.cameraFollowObject,
-                                y: this.cameraFollowObject.y + 64,
-                                duration: 500,
-                            })
-                        }
+                    this.player.onStartOverlapWith(cameraHalfDown, () => {
+                        this.handleInput('camera-half-down')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('flying')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'flying',
             (portal: Phaser.GameObjects.GameObject): void => {
                 if (portal instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(portal, () => {
-                        if (this.overlapStarted(portal)) {
-                            this.player.changeToFlyingState()
-                        }
+                    this.player.onStartOverlapWith(portal, () => {
+                        this.player.handleInput('flying')
                     })
                 }
             }
         )
 
-        this.gameMap.initializeObjectList('running')
-        this.gameMap.addActionToObjectList(
+        this.gameMap.initializeObjectList(
             'running',
             (portal: Phaser.GameObjects.GameObject): void => {
                 if (portal instanceof Phaser.Physics.Arcade.Sprite) {
-                    this.player.overlapWith(portal, () => {
-                        if (this.overlapStarted(portal)) {
-                            this.player.changeToRunningState()
-                        }
+                    this.player.onStartOverlapWith(portal, () => {
+                        this.player.handleInput('running')
                     })
                 }
             }
@@ -296,17 +215,6 @@ export default class Scene extends Phaser.Scene {
             .setZoom(0.75)
         this.cameras.main.startFollow(this.cameraFollowObject, false, 0.5, 0.5, -300, 0)
 
-        this.cursors = this.input.keyboard!.createCursorKeys()
-        this.input.on('pointerdown', () => {
-            if (this.player.getIsRunning()) {
-                if (this.player.isBlockedDown()) {
-                    this.player.doSmallJump()
-                }
-            } else {
-                this.player.fly()
-            }
-        })
-
         const win1 = this.add.zone(0, 0, configs.GAME_WIDTH, configs.GAME_HEIGHT).setOrigin(0, 0)
         win1.setSize(configs.GAME_WIDTH, configs.GAME_HEIGHT)
         this.scene.launch('pause')
@@ -316,35 +224,60 @@ export default class Scene extends Phaser.Scene {
         this.scene.launch('background')
     }
 
+    public handleInput(key: string): void {
+        if (key == 'dead') {
+            this.audioManager.stop(`audio-level-${this.level}`)
+            this.audioManager.play('audio-dead')
+            this.doDeathEffect()
+        } else if (key == 'win-start') {
+            this.audioManager.stop(`audio-level-${this.level}`)
+            this.camera.stopFollow()
+        } else if (key == 'win-end') {
+            this.won = true
+            const pauseScene = this.scene.manager.getScene('pause')
+            if (pauseScene instanceof PauseScene) {
+                this.audioManager.play('audio-win')
+                pauseScene.displayWinWindow()
+            }
+        } else if (key == 'camera-up') {
+            this.add.tween({
+                targets: this.cameraFollowObject,
+                y: this.cameraFollowObject.y - 128,
+                duration: 500,
+            })
+        } else if (key == 'camera-down') {
+            this.add.tween({
+                targets: this.cameraFollowObject,
+                y: this.cameraFollowObject.y + 128,
+                duration: 500,
+            })
+        } else if (key == 'camera-half-up') {
+            this.add.tween({
+                targets: this.cameraFollowObject,
+                y: this.cameraFollowObject.y - 64,
+                duration: 500,
+            })
+        } else if (key == 'camera-half-down') {
+            this.add.tween({
+                targets: this.cameraFollowObject,
+                y: this.cameraFollowObject.y + 64,
+                duration: 500,
+            })
+        }
+    }
+
     public update(): void {
         this.cameraFollowObject.setX(this.player.getX())
         if (this.player.isBlockedRight()) {
-            const value = localStorage.getItem(`level-${this.level}-best`)
-            if (value) {
-                let bestScore: number = Number(value)
-                if (Math.ceil(this.getCompletingPercent() * 100) > bestScore) {
-                    bestScore = Math.ceil(this.getCompletingPercent() * 100)
-                    localStorage.setItem(`level-${this.level}-best`, String(bestScore))
-                }
-            } else {
-                localStorage.setItem(`level-${this.level}-best`, '0')
-            }
-            this.audioManager.stop(`audio-level-${this.level}`)
-            this.audioManager.play('audio-dead')
-            this.player.burstParticle()
-            this.doDeathEffect()
-        } else {
-            this.player.update()
-            if (this.cursors.space.isDown || this.cursors.up.isDown) {
-                if (this.player.getIsRunning()) {
-                    if (this.player.isBlockedDown()) {
-                        this.player.doSmallJump()
-                    }
-                } else {
-                    this.player.fly()
-                }
+            this.handleInput('dead')
+            this.player.handleInput('dead')
+        }
+        if (this.cursor.space.isDown || this.cursor.up.isDown || this.pointer.isDown) {
+            if (this.player.isBlockedDown()) {
+                this.player.handleInput('hit')
             }
         }
+        this.player.update()
     }
 
     public doDeathEffect(): void {
@@ -361,18 +294,20 @@ export default class Scene extends Phaser.Scene {
         this.won = false
         this.audioManager.play(`audio-level-${this.level}`)
 
-        // this.player.setX(24950) Level 2
-        // this.player.setX(29875) Level 3
-        // this.player.setX(30000)
-        this.player.setX(consts.PLAYER.INIT_X)
-        this.player.setY(consts.PLAYER.INIT_Y)
-        this.player.changeToRunningState()
+        this.player.handleInput('restart')
 
         this.cameraFollowObject.setX(consts.CAMERA_FOLLOW_OBJECT.INIT_X)
         this.cameraFollowObject.setY(consts.CAMERA_FOLLOW_OBJECT.INIT_Y)
 
         this.camera.resetFX()
-        this.camera.startFollow(this.cameraFollowObject, false, 0.5, 0.5, consts.CAMERA.OFFSET_X, consts.CAMERA.OFFSET_Y)
+        this.camera.startFollow(
+            this.cameraFollowObject,
+            false,
+            0.5,
+            0.5,
+            consts.CAMERA.OFFSET_X,
+            consts.CAMERA.OFFSET_Y
+        )
     }
 
     public getCompletingPercent(): number {
@@ -381,12 +316,5 @@ export default class Scene extends Phaser.Scene {
         } else {
             return this.player.getX() / this.mapWidth
         }
-    }
-
-    public overlapStarted(obj: Phaser.Physics.Arcade.Sprite): boolean {
-        if (obj.body) {
-            return !obj.body.touching.none && obj.body.wasTouching.none
-        }
-        return false
     }
 }

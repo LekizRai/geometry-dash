@@ -34,7 +34,7 @@ module.exports = {
         },
     },
     plugins: [
-        new HtmlWebpackPlugin({ gameName: 'My Game', template: 'index.html' }),
+        new HtmlWebpackPlugin({ gameName: 'Geometry Dash Lite 2.0', template: 'index.html' }),
         new CopyWebpackPlugin({
             patterns: [
                 { from: 'assets', to: 'assets' },

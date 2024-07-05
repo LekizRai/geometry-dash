@@ -61,18 +61,6 @@ export default class Preload extends Phaser.Scene {
     }
 
     public create(): void {
-        // const backgroundScene = new Background()
-        // this.scene.add('background', backgroundScene)
-
-        // const playerChoosingScene = new PlayerChoosingScene()
-        // this.scene.add('player-choosing', playerChoosingScene)
-
-        // const levelChoosingScene = new LevelChoosingScene()
-        // this.scene.add('level-choosing', levelChoosingScene)
-
-        // const pauseScene = new Pause()
-        // this.scene.add('pause', pauseScene)
-
         const audioManager = AudioManager.getInstance()
         audioManager.add('audio-level-1', this.sound.add('audio-level-1'))
         audioManager.add('audio-level-2', this.sound.add('audio-level-2'))
